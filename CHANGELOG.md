@@ -7,13 +7,2155 @@ of the project's recoverable handoff (along with `HANDOFF.md`) so any future
 contributor or session can reconstruct the work history without access to a
 git client. Newest commits at the top.
 
+> **Note on commit hashes.** On 2026-08-28 this repository's history was
+> rewritten to drop 44 superseded copies of the prebuilt Windows wallet,
+> which renumbered every commit. Hashes in the *Archived history* section
+> below refer to pre-rewrite commits and will not resolve with `git show`.
+> The commit messages themselves are unchanged and remain the authoritative
+> record.
+
 ---
 
-## `f946596` — Persist BurritoCoin explorer customizations as a portable patch
+## `b59f278` — release: restore the current Windows wallet after the history rewrite
+
+**Date:** 2026-08-28 14:49:52 +0000  
+**Author:** Claude  
+**Full hash:** `b59f278aec8a806cc884715c68bcbe3fbbe81ff9`
+
+The preceding rewrite stripped contrib/release/burritocoin-qt-win64.exe from
+all 140 commits, which removed the live copy along with the 44 superseded
+ones. This puts the current, verified build back as the single copy in
+history.
+
+Identical bytes to what was published and verified live before the rewrite:
+
+  SHA256  3890885d10a7e3bc6a43a95a79d0904dbf64090bebfdf6c51f67b5d934263af2
+  size    34,975,760 bytes
+  mode    100755 (unchanged)
+
+The download URL is unchanged - raw/master/contrib/release/... - so the link
+on burritoco.in and the SHA256 published beside it both stay correct.
+
+contrib/release/README.md gains a note about the version string. The binary
+reports v0.21.4.0-57f5cf3 in Help -> About, which was its true source commit,
+but that SHA was renumbered by the rewrite and no longer resolves. The string
+is compiled into the executable and cannot be corrected, so the README now
+says so plainly and points readers at the SHA256 as the real check.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `f2317f0` — Merge pull request #2: publish the rebuilt Windows wallet
+
+**Date:** 2026-08-28 09:40:36 -0500  
+**Author:** BurritoCoinDev  
+**Full hash:** `f2317f0780811711a297f1995bd966c96a481452`
+
+Replaces the stale burritocoin-qt-win64.exe (which carried the retired
+Linode IP as its only compiled-in fixed seed, leaving fresh installs with
+no bootstrap peer) and purges that dead IP from the remaining runtime
+config. The published SHA256 on website/mine-windows.html moves in the
+same merge, so the page and the download never drift.
+
+## `c1fa48c` — config: purge the dead Linode IP from everything still consulted at runtime
+
+**Date:** 2026-08-28 14:39:37 +0000  
+**Author:** Claude  
+**Full hash:** `c1fa48c3ae28b59571e5cf2df8218b5042ec8cca`
+
+50.116.17.170 was released back to Linode when the instance was deleted, so
+it now belongs to an unrelated customer. Anything that still points there is
+worse than stale — it aims traffic at a stranger's host.
+
+- explorer/coins/brto.js and the same line inside
+  contrib/explorer/burritocoin-explorer.patch set demoSiteUrlsByNetwork to
+  http://50.116.17.170:3002, the old explorer. Point both at
+  https://explorer.burritoco.in so a re-applied patch stays correct.
+- contrib/oracle/burritocoin.conf.example carried an addnode= line to the
+  Linode, labelled "DELETE THIS LINE at cutover". Cutover happened; the line
+  is gone. The compiled-in fixed seed and seed.burritoco.in both resolve to
+  the Oracle host, so no addnode= is needed at all.
+- contrib/vps/burritocoin.conf described the compiled-in seed as the Linode.
+  It is 129.146.160.229:9227 now.
+
+CLAUDE.md and HANDOFF.md said the Linode "is being retired" — it is retired,
+and the instance is deleted. Stated in the past tense so a future session
+doesn't go looking for a host that no longer exists.
+
+Remaining mentions in doc/oracle-migration.md are the migration's historical
+record and a still-open action item, so they stay. CHANGELOG.md is generated
+from commit messages and is left alone by design.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `90bfcfd` — release: publish the rebuilt Windows wallet (v0.21.4.0-57f5cf3)
+
+**Date:** 2026-08-28 14:29:34 +0000  
+**Author:** Claude  
+**Full hash:** `90bfcfda907e9ab7c17a80e6063b1c21bf9b6535`
+
+The committed burritocoin-qt-win64.exe was stale: it still carried the
+retired Linode IP (50.116.17.170) as its compiled-in fixed seed, so a
+fresh install had no working bootstrap peer once that host went away. It
+also predated the FAQ-panel rendering fixes.
+
+Replace it with a build cross-compiled from 57f5cf3 (a pre-rewrite SHA; see contrib/release/README.md) and verified before
+committing:
+
+  SHA256  3890885d10a7e3bc6a43a95a79d0904dbf64090bebfdf6c51f67b5d934263af2
+  size    34,975,760 bytes
+  type    PE32+ executable (GUI) x86-64, MS Windows
+
+  fixed seed 129.146.160.229:9227 (Oracle host)   present
+  fixed seed 50.116.17.170                        absent
+  DNS seed   seed.burritoco.in                    present
+  FAQ dock title with escaped ampersand           present
+  old overlapping em-dash FAQ header              absent
+
+website/mine-windows.html publishes that SHA256 in the same commit, per
+the standing rule in CLAUDE.md - the page and the binary must never drift.
+The download URLs are unchanged (raw/master/contrib/release/...), so both
+live links keep working across the Cloudflare Pages deploy.
+
+contrib/release/README.md now points users at the website for the hash
+instead of telling them to dig it out of the commit that added the file,
+and records the version string the binary reports in Help -> About.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `4c7d1b6` — ci: build the Windows wallet on a runner instead of by hand
+
+**Date:** 2026-08-21 21:49:34 +0000  
+**Author:** Claude  
+**Full hash:** `4c7d1b680ec685419debc512a7c76b4c5cf8c033`
+
+The binary in contrib/release/ keeps going stale because rebuilding it
+depends on somebody having a working mingw toolchain and unrestricted
+network at the same moment. It is currently two changes behind: it still
+carries the retired Linode as its compiled-in fixed seed, and predates both
+FAQ panel fixes.
+
+Trying to rebuild it in a sandboxed environment ran into the reason this
+should not be a manual job. Some egress proxies refuse GitHub /archive/
+URLs, which is where depends/ fetches libevent and libfmt from, and no
+mirror carries those exact tarballs. The only way through is to repoint the
+recorded SHA256 hashes at substitute archives — but those hashes pin the
+supply chain of a wallet, so weakening them to make a build succeed is
+precisely the wrong trade. A runner can fetch what depends/ actually pins
+and verify it unchanged.
+
+Triggers on v* tags and on demand. depends/ is cached against the package
+definitions, so Qt is only rebuilt when a dependency really moves. The job
+prints the SHA256 into the run summary because website/mine-windows.html
+publishes that hash for download verification: if the two drift apart the
+page tells users the download is tampered with when it is merely stale.
+
+Addresses the "build official release binaries via depends/" item in
+HANDOFF.md section 7.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3ec1d71` — doc: the Linode is gone; the project now bills nothing
+
+**Date:** 2026-08-21 21:43:42 +0000  
+**Author:** Claude  
+**Full hash:** `3ec1d71e16caa6127f93681099b19646ed33992a`
+
+Deleted 2026-08-19 without waiting for mining to relocate. That ordering was
+a deliberate choice rather than an oversight: stopping mining turned out to
+be safe and reversible, because difficulty freezes while no one is hashing
+instead of drifting upward, so resuming later does not face a target the
+available hardware cannot meet. The consequence is that the chain is not
+advancing until a miner starts somewhere, and the explorer shows a frozen
+tip — expected, not a fault.
+
+The vps-mining wallet was abandoned with the box; roughly 1,500 BRTO,
+unrecoverable, and judged not worth the handling. The premine was checked
+first the only way that counts: opening the OneDrive backup in a fresh
+wallet and seeing the balance, rather than trusting that the file was good.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3f9b85b` — qt: stop the FAQ panel header overlapping, and show the ampersand in its title
+
+**Date:** 2026-08-21 20:59:29 +0000  
+**Author:** Claude  
+**Full hash:** `3f9b85b9fec9dab066c75214a540d632a2f64ccc`
+
+Two rendering faults visible in the running wallet.
+
+The dock title bar read "Help FAQ": QDockWidget puts its window title through
+the same mnemonic handling as a menu, so the bare '&' was swallowed. The code
+already knew this — there is a comment explaining it and escaping the string
+for toggleViewAction() — but the dock's own title was left unescaped.
+
+The panel header painted the subtitle on top of the title. The subtitle
+carried margin-top:0, and Qt's rich-text engine does not collapse adjacent
+margins the way a browser does, so once the header wrapped at the dock's
+default width the two blocks occupied the same lines. An earlier attempt
+swapped <h2> for a <div> with an explicit line-height, which reduced the
+overlap without removing its cause. Both blocks are now <p> with explicit
+non-zero margins, and the em dash is dropped from the header so it is short
+enough not to wrap in the first place.
+
+Note that contrib/release/burritocoin-qt-win64.exe still contains the old
+behaviour, and also predates the seed change to the Oracle host; both land
+only when that binary is rebuilt.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `0237873` — seeds+docs: point at the Oracle host, retire the Linode references
+
+**Date:** 2026-08-21 20:56:25 +0000  
+**Author:** Claude  
+**Full hash:** `02378734c6bf53f8aaa88a3574613aefcf8803b3`
+
+The fixed seeds compiled into the client still listed only the Linode, which
+is being cancelled — and once it is, that IP is reassigned to an unrelated
+customer, so shipped wallets would be dialling a stranger as their fallback.
+Regenerated chainparamsseeds.h for 129.146.160.229 (verified by recomputing
+the old bytes from the old IP and matching them exactly) and updated both
+node lists. The testnet entry carries a note that nothing listens there yet;
+it exists so the array is non-empty and points somewhere we control.
+
+HANDOFF.md described infrastructure that no longer exists: a single Linode
+running everything, a loopback peer daemon, a throttled miner service, an
+nginx-served static site under /var/www. Rewrote section 3 for what actually
+runs — Cloudflare Pages for the site, one Oracle A1 for node/ElectrumX/
+explorer, no second daemon, no mining — and recorded the operational details
+that are easy to get wrong on that box: which ports must stay closed, that
+OCI needs both the security list and the in-image iptables rules, and that
+the explorer needs BTCEXP_SECURE_SITE behind the proxy.
+
+Section 4 now says plainly that no wallet lives on production infrastructure.
+The premine's risk changed rather than disappeared: it is off the public
+server, but the encrypted wallet.dat exists only in OneDrive, so the
+outstanding work is a second offline copy and a restore test. The vps-mining
+wallet was deliberately abandoned with the Linode; its coins are gone and the
+document should say so rather than imply they are recoverable.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e82df40` — doc: note that the explorer needs BTCEXP_SECURE_SITE behind nginx
+
+**Date:** 2026-08-19 02:32:26 +0000  
+**Author:** Claude  
+**Full hash:** `e82df40f2630785c5a6ce6f490f04b3c14fbb3d1`
+
+Without it Express never sets "trust proxy", so btc-rpc-explorer sees every
+request as originating from nginx at 127.0.0.1 and its rate limiter — 200
+requests per 15 minutes, intended per client — applies to all visitors
+collectively. Once any handful of them adds up to 200, everyone gets 429.
+
+The failure is easy to misread: the service is running, the logs are clean,
+and curl against 127.0.0.1:3002 returns 200, so it looks like a network or
+DNS problem rather than a config one. Restarting clears the counter and hides
+it again until the next time traffic accumulates.
+
+Caught immediately after cutover, on traffic from verification checks.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `a8a2ab4` — doc: record the completed Oracle migration
+
+**Date:** 2026-08-19 02:23:07 +0000  
+**Author:** Claude  
+**Full hash:** `a8a2ab46269d7aa8ecdbd0043dc1d21465b4c22b`
+
+All three services now run on the Oracle A1 box and serve production
+traffic: burritocoind (synced, peered with the Linode in both directions),
+ElectrumX, and btc-rpc-explorer behind nginx with a Let's Encrypt
+certificate. explorer.burritoco.in points at the new box; seed.burritoco.in
+resolves to both hosts so the network has two seeds during the parallel run.
+
+Records what was actually built rather than what was planned, including the
+port verification done from a third-party host (9226 must be closed, and an
+inbound P2P connection is what proves the box works as a seed), the four
+deployment-script bugs this flushed out, and the rebuild notes that were not
+obvious in advance: system libraries beat the depends tree here, the
+explorer must bind to loopback behind nginx, and certbot's HTTP-01
+validation forces DNS to move before the certificate can be issued.
+
+Still open: mining, which has to leave the Linode before it can be
+cancelled, and which is the last thing standing between this and $0/month.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `1eec828` — contrib/vps: pin the ElectrumX revision instead of tracking HEAD
+
+**Date:** 2026-08-18 22:48:17 +0000  
+**Author:** Claude  
+**Full hash:** `1eec828ad2438f35a69673e1044037dc742772fd`
+
+setup-electrumx.sh cloned spesmilo/electrumx at --depth=1 with no ref, so
+the version installed depended entirely on when the script was run. The
+live explorer was set up in March on 24865dc; a fresh run today gets 2.0.0,
+which renamed Coin.header_hash to header_hash_rev. The BurritoCoin class
+overrides genesis_block (to keep the premine coinbase as a spendable UTXO
+rather than let the default strip it) and calls that method, so the server
+now starts and then dies on every prefetch with AttributeError.
+
+Pin to the revision the working explorer runs, so a rebuild reproduces the
+deployment rather than whatever upstream landed since. ELECTRUMX_REF
+overrides it. The clone drops --depth=1 because a shallow clone cannot check
+out an arbitrary commit; the repo is under a megabyte.
+
+Also make the override itself tolerate either spelling, so the class is not
+silently tied to one revision if the pin is later moved forward.
+
+Found deploying to the Oracle A1 box.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `860ed7a` — contrib/vps: install uvloop with ElectrumX, which the config already requires
+
+**Date:** 2026-08-18 22:44:05 +0000  
+**Author:** Claude  
+**Full hash:** `860ed7ae64cf8dc2b4c4b3ed4a8e648209196772`
+
+setup-electrumx.sh writes EVENT_LOOP_POLICY=uvloop into /etc/electrumx.conf
+but installed only plyvel, aiohttp and pylru. ElectrumX imports uvloop while
+constructing Env(), before any other startup work, so the missing module is
+not a soft fallback to the default asyncio loop — the server exits
+immediately with ModuleNotFoundError and systemd records a clean exit, which
+reads as "started then stopped" rather than as a dependency error.
+
+Caught deploying to the Oracle A1 box (Ubuntu 24.04 / aarch64, ElectrumX
+2.0.0), where uvloop is not pulled in as a transitive dependency.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `652651a` — contrib/vps: let setup-electrumx.sh take RPC credentials from the environment
+
+**Date:** 2026-08-18 22:41:36 +0000  
+**Author:** Claude  
+**Full hash:** `652651ae3108df85c2da289d782db554c25ece65`
+
+The script read rpcuser= and rpcpassword= straight out of the node config
+and aborted when they were absent. That makes it unusable against any node
+configured the safer way, with rpcauth=, which stores only a salted hash —
+the plaintext genuinely cannot be recovered from such a config, so the
+failure was not a misconfiguration the operator could fix in the file.
+
+RPC_USER and RPC_PASS now fall back to the config only when unset, so the
+caller can supply them directly, and the error message says so instead of
+naming config keys that may not apply.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `46c98f7` — contrib/oracle: real deployment configs, and drop the loopback peer
+
+**Date:** 2026-08-18 22:35:04 +0000  
+**Author:** Claude  
+**Full hash:** `46c98f74618f71188669e0e523752779a0da8054`
+
+Building the node on the Oracle A1 surfaced two things worth recording.
+
+--disable-wallet does not work on this fork. libmw/src/wallet/Keychain.cpp
+includes wallet/walletdb.h -> wallet/bdb.h -> <db_cxx.h> unconditionally, so
+the build dies on a missing Berkeley DB header regardless of the flag —
+libmw's wallet sources are not gated behind ENABLE_WALLET. The workable
+configuration is to build with the wallet (libdb++-dev, libsqlite3-dev) and
+disable it at runtime with disablewallet=1, which is a stronger guarantee
+than the build flag: no wallet is loaded and none can be created.
+
+The loopback peer daemon does not need to migrate. Per the header of
+contrib/vps/setup-second-peer.sh it exists solely so getblocktemplate sees a
+non-zero peer count — the daemon refuses to serve mining templates when it
+believes it is disconnected. The Oracle box never mines, so the sibling has
+no purpose there; dropping it saves a process, a datadir, and two ports.
+Oracle therefore runs three services, not four.
+
+Adds burritocoin.conf.example (loopback-only RPC, txindex, disablewallet,
+and the parallel-run addnode line flagged for deletion at cutover) and an
+electrumx.service unit; rewrites burritocoind.service and
+btc-rpc-explorer.service for the actual layout (ubuntu user, /usr/local/bin
+binaries, /home/ubuntu/.burritocoin datadir) rather than the service user the
+earlier drafts assumed.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3799a15` — doc: complete the Oracle firewall port list
+
+**Date:** 2026-08-18 21:04:40 +0000  
+**Author:** Claude  
+**Full hash:** `3799a1528545d96a393724300f527ffb345d4629`
+
+Phase 3 listed only 9227/80/443, which omits ElectrumX. The box runs four
+services and needs 50001 open publicly for Electrum wallet clients; it also
+has three RPC ports (9226 node, 29226 loopback peer, 8000 ElectrumX admin)
+that must stay closed to the internet, so the table now states both halves
+explicitly rather than leaving the closed ones unmentioned.
+
+Also folded the per-port iptables commands into a loop and noted that the
+OS-level rules are the usual reason a port appears not to work on OCI even
+after the security list allows it.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `9d11538` — doc: record completed Cloudflare migration and the VPS-miner blocker
+
+**Date:** 2026-08-18 20:48:26 +0000  
+**Author:** Claude  
+**Full hash:** `9d1153833b050bd768b709577a0cd5905d478386`
+
+Phase 1 is done (2026-08-18): the marketing site now serves from Cloudflare
+Pages and DNS moved from WordPress.com to Cloudflare. Rewrote that phase
+from a plan into what was actually done, keeping the gotchas that cost time
+so a future rebuild does not rediscover them:
+
+- the dashboard routes "create an application" into the Workers wizard, not
+  Pages; the Pages flow is a separate link
+- Cloudflare's zone scan imported 5 of 9 records, silently dropping the
+  explorer and seed subdomains — diff against the old provider first
+- Pages _redirects matches paths only, so a hostname-sourced rule never
+  fires; www -> apex belongs in a zone-level Redirect Rule, and Cloudflare's
+  "www may not be proxied" warning is a false positive for Pages CNAMEs
+- SSL must be Full (strict); Flexible loops with Pages
+- seed must stay DNS-only forever (P2P cannot traverse the HTTP proxy)
+
+Added Phase 0 for a blocker found while profiling the box: the Linode has
+been CPU-mining since Jul 31 via /usr/local/bin/brto-miner.sh looping
+generatetoaddress, which is the ~92% CPU load (the RPC http-worker threads
+carry it; the once-a-minute "Broken pipe" entries are the client timing out
+while the server keeps mining). It cannot move to Oracle — that is a
+straightforward CSA 1.3(d) violation rather than a heuristic risk — but it
+is also currently the network's only miner, so mining has to be running on
+owner hardware before it can be stopped. Also flags the vps-mining wallet
+for the copy-off-before-decommission list.
+
+Corrected the service inventory throughout: the box runs four services
+(two daemons, ElectrumX, explorer), not the two originally scoped.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `a14d043` — website: drop non-functional _redirects file
+
+**Date:** 2026-08-18 19:29:19 +0000  
+**Author:** Claude  
+**Full hash:** `a14d043f06919815496de90df92150f9e3972458`
+
+Cloudflare Pages matches _redirects rules against request paths only; a
+source pattern containing a hostname (https://www.burritoco.in/*) never
+matches, so the www -> apex rule was a silent no-op. Verified against the
+live deployment: www.burritoco.in returned 200 rather than a 301.
+
+Host-based redirects belong at the zone level instead (Rules -> Redirect
+Rules), which is where this one now lives. Removing the file so it does
+not read as working configuration.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `53bab09` — website: use extensionless URLs to match Cloudflare Pages routing
+
+**Date:** 2026-08-18 18:42:10 +0000  
+**Author:** Claude  
+**Full hash:** `53bab09dc0d0895f33a1ca7192a6c679bd61c7b7`
+
+Pages serves clean URLs: a request for /wallets.html gets a 308 to
+/wallets. That left every internal link taking a redirect hop, and — more
+importantly — every canonical tag and every sitemap <loc> pointing at a
+URL that redirects, which is an indexing inconsistency.
+
+Convert internal references to the extensionless form Pages actually
+serves: nav/body links, canonical tags, og:url, and sitemap entries.
+Anchors (#step-1) and all external links are unchanged, as are asset
+references (styles.css, logo.svg, the PNGs), which have no .html suffix.
+
+The files keep their .html names on disk — only the URLs referring to
+them change. 404.html stays as-is; Pages uses it as the not-found handler
+by filename.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `2a7a2e9` — website: fix audit findings before Cloudflare Pages launch
+
+**Date:** 2026-08-10 02:22:58 +0000  
+**Author:** Claude  
+**Full hash:** `2a7a2e99c384ade3b2570df8062b5f51e35aa875`
+
+Pre-deploy audit of website/ (link integrity, Pages platform gotchas,
+migration content accuracy) surfaced real bugs; all fixed:
+
+- mine-linux.html, mine-mac.html: `cd burritocoin` after `git clone` dead-ends
+  on case-sensitive filesystems — the clone directory is `BurritoCoin`.
+- mine-windows.html: Step 1 said Windows binaries were "coming soon" and
+  Steps 2-3 published a SHA256 for a zip that has never existed. Rewritten:
+  Option A downloads the real prebuilt GUI wallet from
+  contrib/release/burritocoin-qt-win64.exe with its actual SHA256 (and GUI
+  substitution notes for the CLI-based steps), Option B builds from source
+  (WSL2/MSYS2) yielding the CLI tools the guide uses verbatim.
+- run-a-node.html: getpeerinfo subver example said /Satoshi:0.21.4/; BRTO
+  peers report /BurritoCoinCore:0.21.4/.
+- wallets.html: page described wallets but linked no download — the Next-step
+  callout now points Windows users at the prebuilt exe (with hash reference)
+  and Linux/macOS at the source builds.
+- spec.html: §6 notes the interim prebuilt wallet location alongside the
+  (currently empty) Releases page; §8 no longer references a nonexistent
+  "email above" for proof-of-association.
+- styles.css: scroll-padding-top so anchor jumps clear the sticky nav.
+- 404.html: branded not-found page (Pages serves it automatically).
+- _redirects: 301 www.burritoco.in -> burritoco.in.
+- CLAUDE.md: note to keep the exe SHA256 on mine-windows.html in sync with
+  contrib/release rebuilds.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `7b80f2b` — infra: prepare the $0/month migration (Oracle free tier + Cloudflare)
+
+**Date:** 2026-07-19 16:47:58 +0000  
+**Author:** Claude  
+**Full hash:** `7b80f2b0f508debdb46c894b109248d3bd8adbda`
+
+Groundwork for retiring the paid Linode after a ~30-day parallel run, per
+doc/oracle-migration.md (new): static site to Cloudflare Pages, seed node +
+explorer to an Oracle Always Free A1 VM (validate/relay only — no mining,
+no wallets on that box), then cancel the Linode.
+
+Make peer discovery IP-portable ahead of the move:
+
+- chainparams: give testnet the same DNS seed as mainnet
+  (seed.burritoco.in). Testnet previously relied solely on the fixed seed
+  IP baked into chainparamsseeds.h, so a seed-host move would have orphaned
+  existing testnet binaries; DNS discovery makes the move one A-record
+  update. (A DNS seed yields IPs only — testnet peers still dial 19227.)
+- website/run-a-node.html: the bootstrap line now says
+  addnode=seed.burritoco.in:9227 instead of the raw VPS IP, so the page
+  stays correct across host moves.
+
+Add contrib/oracle/ deployment templates referenced by the runbook:
+burritocoind.service (hardened, no-wallet node), btc-rpc-explorer.service,
+and an nginx reverse-proxy site for explorer.burritoco.in behind
+Cloudflare. No credentials or account identifiers are embedded anywhere —
+RPC auth is generated on-box and the explorer .env is copied box-to-box,
+never committed.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe (testnet
+seed change).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `85dc652` — qt/mining: add an external-miner setup guide (its own window) + NVIDIA focus
+
+**Date:** 2026-07-10 00:16:05 +0000  
+**Author:** Claude  
+**Full hash:** `85dc6524650c7e70f5e0a78a4cd970bae2754463`
+
+Adds a standalone "Set up an external miner" guide, opened from a link on the
+Mine tab so the how-to doesn't clutter the tab. The guide (a themed dialog
+with clickable, browser-opening links) covers: which miners we drive and
+their official repos (cpuminer-opt — tested/confirmed; ccminer for NVIDIA),
+where to save the download, how to add a Windows Defender folder exclusion
+(and why/when that's safe), and how to point the wallet at the binary.
+
+Focuses the recommended path on CPU + NVIDIA. Modern AMD (RDNA / RX 6000-7000)
+can't run the GCN-era scrypt GPU tools, so it's presented as an honest "not
+supported, use a CPU miner" note rather than a dead-end download. The sgminer
+code path is retained for older GCN cards; the miner-path placeholder now
+reads "cpuminer (CPU) or ccminer (NVIDIA)".
+
+Also fixes a pre-existing string-corruption bug in the first-run mining
+disclosure: `\xe2\x80\x9ccoin` let the \x9c hex escape swallow the following
+"c", so the curly quote and "coin miner" rendered garbled. Terminated the
+escape with a string-literal break.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `0c9243b` — qt/mining: build external-miner args per miner family (CPU / NVIDIA / AMD)
+
+**Date:** 2026-07-10 00:00:33 +0000  
+**Author:** Claude  
+**Full hash:** `0c9243be00b0217471de2c6b3890932a1e2b232c`
+
+External GPU mining reuses the working localhost Stratum bridge; the only
+missing piece was that the miner arguments were hardcoded cpuminer-style
+(-a scrypt ... -t <cores>), which is wrong for the GPU miners:
+
+- cpuminer / minerd (CPU): -a scrypt, honors the core slider via -t
+- ccminer   (NVIDIA/CUDA): -a scrypt, GPUs auto-detected, no CPU -t
+- sgminer/cgminer (AMD/OpenCL): -k scrypt (not -a), no -t
+
+Detect the family from the binary's file name and build the right command
+line. The launched command is now echoed into the miner log so the chosen
+family and flags are visible (and to diagnose a miner that rejects a flag).
+Point the "Miner program" field at ccminer.exe or sgminer.exe and it mines on
+the GPU the same way cpuminer does on the CPU.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `bb91560` — qt/mining: honor the core slider for the external miner + fix FAQ header overlap
+
+**Date:** 2026-07-09 23:49:34 +0000  
+**Author:** Claude  
+**Full hash:** `bb915605912f61d915853250c1ac0438d9820a52`
+
+Two issues surfaced during the first live external-mining run (which
+succeeded — a block was mined and accepted by the node, validating the full
+Stratum pipeline end-to-end).
+
+miningpage.cpp — the "Processor cores" slider was ignored by the external
+engine: startExternal() launched cpuminer with no -t flag, so it grabbed
+every core (95% CPU) regardless of the slider. Pass -t <selectedThreadCount>
+so the chosen core count is honored (at launch; changing it while running
+still needs Stop/Start).
+
+burritocoingui.cpp — the Help & FAQ panel content header used an <h2>, and
+Qt's rich-text engine gives headings a tight intrinsic line spacing, so when
+the title wrapped in the narrow dock the wrapped line drew on top of the
+first. Render the header as a plain bold block with an explicit line-height
+instead. (Distinct from the earlier dock-title mnemonic fix.)
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3575aa3` — qt/mining: only report a block "found" when it becomes the active tip
+
+**Date:** 2026-07-09 22:57:38 +0000  
+**Author:** Claude  
+**Full hash:** `3575aa3a3e4307fcc9a7d71b35538cb0f33bfb0c`
+
+Round-3 audit of the previously-unaudited serialization/consensus core
+(stratumjob.cpp, miningutil, differential-vs-in-process) came back clean on
+serialization, merkle-branch, witness/MWEB, and prevhash encoding, and
+confirmed one reporting-correctness defect in the shared SubmitBlock path.
+
+MiningUtil::SubmitBlock passed fNewBlock=nullptr and treated ProcessNewBlock's
+bool return as "a new block was found and added." That return is true even
+when nothing new happened: AcceptBlock short-circuits `if (fAlreadyHave)
+return true;` (leaving fNewBlock false) for a block we already have, and a
+valid block that lands on a side branch is accepted without becoming our tip.
+Both callers pre-gate on CheckProofOfWork, so a resent winning share (miners
+and stratum proxies routinely resend on reconnect / missed ack) reconstructs
+the identical block, ProcessNewBlock returns true via the duplicate
+short-circuit, and blocks_found double-counts with a spurious blockFound.
+This affected both the Stratum bridge and the in-process CPU miner, which
+share this helper.
+
+Capture a real fNewBlock and additionally confirm the submitted block is now
+the active chain tip before reporting it found, so a duplicate resubmit or an
+orphaned sibling is no longer miscounted. Also reorder CaptureNodeHandles to
+resolve the node context before the chainstate-dereferencing IBD check, so the
+graceful "node not fully started" error can't be pre-empted by an assert in a
+narrow startup window.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `df24e4f` — qt/mining: harden external-miner against 2 audit findings
+
+**Date:** 2026-07-09 22:08:35 +0000  
+**Author:** Claude  
+**Full hash:** `df24e4f936ec838e22489644cd6a324898e64e5d`
+
+A full adversarial audit of the mining subsystem (8 lenses, 6 came back
+clean — the consensus/wire/difficulty-math core is solid) confirmed two
+robustness defects, both fixed here.
+
+stratumbridge.cpp — unbounded per-connection line buffer (localhost DoS):
+onClientReadyRead appended readAll() into a QByteArray and only drained on
+newline, with no size cap and no socket read-buffer bound. A local client
+that streams bytes without ever sending '\n' grew the accumulator until the
+process was OOM-killed. Cap an un-terminated line at 16 KB (a stratum
+request is well under 1 KB) and drop the connection past it.
+
+miningpage.cpp — Stop-then-Start race left a phantom "Mining" state:
+ExternalMiner::stop() is asynchronous (SIGTERM then a delayed hard-kill), so
+clicking Start again within the miner's shutdown window silently no-op'd
+ExternalMiner::start() (its `if (isRunning()) return;` guard), yet the UI
+still flipped to "Mining" at 0 H/s with no miner attached — and when the old
+process finally exited, its stopped() signal quietly reverted the UI to
+Idle. Refuse to start a new run while the previous miner is still running and
+tell the user to retry in a moment; this also prevents the stale stopped()
+from tearing down a fresh run.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `a8b1654` — qt/mining: fix 6 bugs in the external-miner Stratum bridge
+
+**Date:** 2026-07-09 21:30:47 +0000  
+**Author:** Claude  
+**Full hash:** `a8b165427703c48c23945ff3ce5e057711682da1`
+
+Bug-check of the Phase 2 external-mining path (localhost Stratum bridge +
+supervised miner process) turned up six defects; all fixed here.
+
+stratumbridge.cpp:
+- Share difficulty math was on the wrong basis. cpuminer scales a scrypt
+  stratum share difficulty by 2^16 (diff_to_target(diff/65536)), so one
+  share at difficulty D is ~D*65536 hashes, not D*2^32. The old
+  SHARE_DIFFICULTY of 1/16384 meant ~4 hashes/share -- a share storm. Set
+  it to 2.0 (~131072 hashes/share; a ~400 kH/s CPU submits ~3 shares/s) and
+  rename HASHES_PER_DIFF1 (2^32) to HASHES_PER_SHARE_DIFF1 (65536) so the
+  hashrate readout is on the same 2^16 basis instead of 65536x too high.
+- stop() iterated the live m_sessions while disconnectFromHost() on an
+  unconnected socket fires disconnected() synchronously, re-entering
+  onClientDisconnected() and erasing from the map mid-iteration (UAF).
+  Snapshot the keys, clear the map, detach our slots, then drain.
+- mining.notify clean_jobs went out as 1/0: UniValue has no push_back(bool)
+  overload so the bool promoted to int. Wrap in UniValue(bool) for a real
+  JSON boolean.
+
+externalminer.cpp/.h:
+- stop()'s delayed hard-kill captured the reused QProcess bare, so a
+  stop()+start() within the grace window could kill the freshly restarted
+  miner. Gate the kill on a per-start generation counter.
+
+miningpage.cpp:
+- On bridge start failure (port 0) the generic error message clobbered the
+  specific reason start() had already emitted synchronously; just return.
+
+Rebuilt and refreshed contrib/release/burritocoin-qt-win64.exe.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `22f576d` — qt: Mine tab — external-miner engine toggle (bridge + cpuminer/GPU)
+
+**Date:** 2026-07-09 19:55:53 +0000  
+**Author:** Claude  
+**Full hash:** `22f576d0ec0a5afc2d7eec2ea6d1ede5e1c54da1`
+
+Phase 2, user-testable: the Mine tab can now mine via the in-wallet
+StratumBridge fed by an external miner, alongside the built-in CPU engine.
+
+- Advanced 'Use an external miner program' checkbox + path picker (Browse).
+  On Start it resolves the wallet payout, starts the localhost bridge, and
+  launches the chosen miner (cpuminer-opt for tuned CPU; ccminer/sgminer for
+  GPU later) with '-a scrypt -o stratum+tcp://127.0.0.1:PORT'.
+- Reuses the hero readout: the bridge's hashrate/blockFound drive the same
+  pill / speed / blocks / ETA; errors + crashes tear the engine down and
+  revert the UI.
+- Adds a miner-output log (external mode only) so a failed stratum handshake
+  is visible, not a black box.
+- Build: add $(SSL_LIBS) to the Qt binary link. QTcpServer/QTcpSocket drag in
+  QtNetwork's openssl symbol object (qsslsocket_openssl_symbols.o) which needs
+  -lssl; the link had -lcrypto only (paymentserver used QLocalServer, which
+  never pulled that object in).
+
+Refreshes the win64 binary. The bridge<->miner handshake is the first thing
+to validate on real hardware; the stratum prevhash word order may need
+pinning against cpuminer from that first test.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `4ed9d77` — qt: external-miner runner — supervise a Stratum miner child process
+
+**Date:** 2026-07-09 17:58:01 +0000  
+**Author:** Claude  
+**Full hash:** `4ed9d77c2c40ab372af32db3fe167c6febe5c384`
+
+Phase 2 of in-wallet GPU+CPU mining: ExternalMiner launches a Stratum miner
+(cpuminer-opt / ccminer / sgminer) as a child process pointed at the localhost
+StratumBridge, tails its merged stdout/stderr for a log + first-error surface,
+and reports started/stopped/crashed/failed-to-launch. Miner-agnostic (the
+caller composes the arg list); arms-length process, never linked. Compiles
+clean; not yet wired to the Mine tab, so no runtime change (no binary refresh).
+
+Next: the Mine-tab engine toggle tying bridge + runner together.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `dade7bf` — qt: stratum bridge — implement the localhost Stratum v1 server
+
+**Date:** 2026-07-09 17:42:10 +0000  
+**Author:** Claude  
+**Full hash:** `dade7bf7ea59e964775e5b9894fc890997904dce`
+
+Phase 1 of in-wallet GPU+CPU mining: the server that speaks Stratum to an
+external miner (cpuminer-opt / ccminer / sgminer) and drives the already
+unit-tested StratumJob core. Compiles clean; not yet wired to the Mine tab,
+so no runtime behavior change (hence no binary refresh).
+
+- QTcpServer bound to 127.0.0.1 only (the interface can submit blocks).
+- mining.subscribe/authorize/submit + mining.notify/set_difficulty over
+  UniValue JSON-RPC; per-session 4-byte extranonce1, extranonce2_size=4.
+- Jobs assembled via BlockAssembler::CreateNewBlock and the race-safe
+  LookupBlockIndex(hashPrevBlock) parent lookup (matching MiningModel);
+  fresh clean job on every new tip, small ring for stale-share tolerance.
+- A submitted share is reconstructed with the session's extranonce1 and
+  ONLY submitted as a block when its header meets the network target, via
+  the same MiningUtil::SubmitBlock (ProcessNewBlock) path as the CPU miner
+  — the miner is never trusted.
+- Low fixed share difficulty drives a share-rate hashrate estimate.
+
+Next: the external-miner runner (QProcess) + Mine-tab engine toggle.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `2e55006` — qt: stratum bridge — interface/scaffolding for in-wallet GPU+CPU mining
+
+**Date:** 2026-07-09 17:26:49 +0000  
+**Author:** Claude  
+**Full hash:** `2e550066fc03659dde71d9e0f79a17f30cccb719`
+
+First artifact of the localhost Stratum-v1 server that lets an external
+miner mine straight into the wallet: cpuminer-opt (tuned CPU) or
+ccminer/sgminer (GPU). Header only — it nails the design and does not yet
+build:
+- binds 127.0.0.1 only (the miner interface can submit blocks);
+- reuses the unit-tested StratumJob + MiningUtil so there is exactly one
+  block-submit path, and never trusts the miner (every share is
+  reconstructed and re-validated via ProcessNewBlock);
+- share-difficulty for a live hashrate readout, but only network-target
+  shares are submitted as blocks;
+- 4+4 extranonce filling the sentinel StratumJob splits coinb1/coinb2 on.
+
+Implementation (protocol + job lifecycle), build wiring, and the GPU
+detect/auto-download + UI follow.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `ef766b8` — qt: fix Mine-tab time-to-block estimate on an under-powered chain
+
+**Date:** 2026-07-09 16:53:18 +0000  
+**Author:** Claude  
+**Full hash:** `ef766b8752884d76650e62d35e49912ef3b503d8`
+
+The Mine tab estimated time-to-block as networkHashPS * nPowTargetSpacing /
+yourHashPS. That assumes blocks arrive every 150 s, but BurritoCoin is
+currently mined far below target (blocks land hours apart), so the estimate
+was wildly optimistic — it showed ~11 seconds when the real solo expectation
+at 22 kH/s is ~10-15 minutes.
+
+Compute it from the actual difficulty instead: expected hashes per block =
+difficulty * 2^32 (difficulty is reported relative to the 0x1d00ffff diff-1
+target), so ETA = difficulty * 2^32 / yourHashPS. This is correct regardless
+of how far real block times drift from the target spacing.
+
+- clientmodel: add getDifficulty() (getdifficulty RPC), mirroring
+  getNetworkHashPS().
+- miningpage: ETA now difficulty-driven; cache difficulty on the same slow
+  cadence (it only changes at retargets).
+
+Refreshes the win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `cdc24af` — qt: fix FAQ dock title overlap + cramped sync progress bar
+
+**Date:** 2026-07-09 16:10:23 +0000  
+**Author:** Claude  
+**Full hash:** `cdc24af341ae9d3789c8f5541d368d75fe02e542`
+
+Two layout bugs from the warm-dark theme, spotted on Windows:
+
+- Help & FAQ panel: styling QDockWidget::title in the app stylesheet
+  broke the dock title-bar geometry, so the QTextEdit content was laid
+  out over the title — the title text collided with the content's first
+  heading (garbled overlap). Removed the QDockWidget/::title rules; Fusion
+  draws a clean dark title band from the palette, content below it.
+
+- Status-bar sync bar: the stretchy safety-tip banner squeezed the
+  progress bar down to ~"100%" width, clipping "N units behind" into a
+  cramped little gold square. Give the bar a minimum width sized (via
+  font metrics) to fit the longest "N units behind" text.
+
+Refreshes the win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `6d18f3e` — qt: theme review fixes — selection/icon decoupling + contrast retunes
+
+**Date:** 2026-07-09 15:53:27 +0000  
+**Author:** Claude  
+**Full hash:** `6d18f3e7d03e053fe95166f2fe025041e831f8c8`
+
+Adversarial review of the warm-dark theme surfaced one design-level
+defect and several contrast/completeness misses:
+
+- Selection vs icon tint: QPalette::Highlight was brand gold — the same
+  color PlatformStyle tints icon glyphs — so selected rows swallowed the
+  coin-control lock and tx-status/watch-only icons. Selection is now a
+  muted warm brown (#5a3010) with cream text, and PlatformStyle tints
+  glyphs brand gold directly instead of deriving the tint from Highlight.
+- Progress bars: a QSS-styled bar draws its centered label in one color,
+  unreadable over the gold chunk past ~50%%. Dropped the QSS rules;
+  Fusion flips the label between Text and HighlightedText natively, and
+  the sync + overlay bars get widget-local gold-chunk palettes.
+- Modal overlay warning icon: the holder button is permanently disabled,
+  so Qt auto-generated a washed-out Disabled pixmap from the tinted
+  icon; register the tinted pixmap for the Disabled state explicitly.
+- Overview watch-only marker: the raw eye glyph is near-black and was
+  painted uncolorized — invisible on the dark card; tint it like the
+  main row icon.
+- Contrast retunes for small text on dark: backup-status label and the
+  restore/key-checker feedback spans to DangerLight/SuccessLight, PSBT
+  INFO badge green darkened for AA, and the network-alert banners
+  restyled from the light-theme gradient to a dark amber band.
+- Mine tab: hashrate label back to Qt::AutoText (permanent RichText
+  would mangle future plain '&'/'<' text), dropped an unused include,
+  fixed a misleading comment in brandstyle.cpp.
+
+Refreshes the win64 binary.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e72b017` — qt: UI phase 2 — app-wide warm-dark brand theme + Mine tab redesign
+
+**Date:** 2026-07-08 02:41:00 +0000  
+**Author:** Claude  
+**Full hash:** `e72b017fea2ca5bea8a493f6532f3b91d42b0497`
+
+Install the BurritoCoin warm-dark theme across the whole wallet:
+
+- NEW qt/brandstyle.{h,cpp}: Fusion QStyle + brand QPalette (from qt/brand.h
+  tokens) + a compact app-wide stylesheet (menus, toolbar tabs with a gold
+  active underline, buttons, gold progress chunk, tooltips, dock title, card
+  panels on Home/Send/Receive). Installed in GuiMain before the first dialog
+  and before PlatformStyle snapshots the palette.
+- platformstyle.cpp: colorize icons on Windows/macOS too — the palette derives
+  a brand-gold tint, so toolbar/status glyphs stay visible on dark chrome.
+- guiconstants.h: retune the PAINTED colors QSS can't reach (tx list
+  foregrounds, negative amounts, STYLE_INVALID now sets its own text color);
+  rename COLOR_BLACK -> COLOR_TX_STATUS_DEFAULT to match its new value.
+- splashscreen.cpp: dark splash (warm gradient, gold wordmark, cream progress
+  text). modaloverlay: dark sync-overlay card + tinted warning glyph.
+- rpcconsole.cpp: console document CSS retuned (teal-on-white -> gold-on-dark).
+- intro/sendcoins/psbt/signverify/options/coincontrol: light-theme status
+  literals (color:black, #800000, lightgreen/orange, red/green) replaced with
+  dark-legible brand values. Removed the Windows-only light progress-bar
+  override (global sheet now styles it).
+- miningpage.cpp: Mine tab redesign — hero card with status pill (Idle/
+  Mining/Paused), 34px gold hashrate readout, gold Start CTA that flips to a
+  danger-outline Stop; stat cards for blocks found + expected time to block;
+  settings grouped into a card. Behavior unchanged.
+- brand.h: dark-theme derivative tokens (Surface/AltRow/Hover/Disabled/
+  DangerLight/SuccessLight).
+
+Adversarial review + win64 binary refresh follow in the next commit (the
+cross toolchain was still building when this landed).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e73084d` — explorer: add 11 rotating quotes + make btcQuotes.js the canonical list
+
+**Date:** 2026-07-03 20:13:46 +0000  
+**Author:** Claude  
+**Full hash:** `e73084d9ca1356e25e2e7ad1a7dfb2d58bd8ec3c`
+
+Adds a second batch of BurritoCoin quotes (11) to the explorer's rotating
+quote pool, bringing it to 27. Rather than hand-editing the binary
+burritocoin-explorer.patch, the full quote list now lives at
+contrib/explorer/btcQuotes.js as the canonical source, copied over
+app/coins/btcQuotes.js on deploy (README updated with the copy step and an
+'Adding rotating quotes' section). Verified: appending the 11 to the live
+16-quote file yields this exact file, byte-for-byte.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3b7e91a` — explorer: fix Mining Summary duplicate-row render
+
+**Date:** 2026-07-03 19:44:59 +0000  
+**Author:** Claude  
+**Full hash:** `3b7e91afaf61b6a3e28a6b235f133f29a9ac3363`
+
+The btc-rpc-explorer Mining Summary page leaks its 125ms status-poll timer
+between loads and re-renders by appending rows without a reset, so toggling
+the 1d/3d range buttons makes one build's miner rows render two-or-more times
+(doubled rows, inflated Total). Add two idempotency guards: loadMiningData()
+clears any running poll timer before starting a new one, and
+displaySummaryData() clears existing rows before re-appending.
+
+Shipped as an idempotent post-patch script (fix-mining-summary-dedup.js)
+rather than folded into the binary burritocoin-explorer.patch, so it is immune
+to upstream whitespace drift and safe to re-run. Wired into the re-apply steps
+in the explorer README. The donut's >1%-revenue slice threshold is left as-is
+(vendor-intended; sub-1% miners fold into Other in the chart but remain in the
+Data table).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `815246b` — Merge branch 'claude/debug-api-400-error-E3Udg' of https://github.com/BurritoCoinDev/BurritoCoin into claude/debug-api-400-error-E3Udg
+
+**Date:** 2026-07-03 14:04:31 -0500  
+**Author:** BurritoCoinDev  
+**Full hash:** `815246b76686ebccccb8b6ff2705854165ba9bc5`
+
+## `62df57d` — qt: UI phase 1 — Help-menu FAQ + brand-gold sync bar
+
+**Date:** 2026-07-03 18:35:59 +0000  
+**Author:** Claude  
+**Full hash:** `62df57d53d5dd854363f421aee60e244a64a6d87`
+
+- Surface the friendly Help & FAQ dock at the top of the Help menu (the
+  same toggle still lives in Window). The Help menu previously offered
+  only the advanced Node window; the one newcomer resource was buried.
+- Snap the sync progress bar from an off-palette orange gradient
+  (#FF8000 -> orange) to brand gold (#f5a623 -> #ffd170).
+
+Refreshes the win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `d4e55ef` — qt: UI phase 0/1 — brand tokens, plain-language balances, safety fix
+
+**Date:** 2026-07-03 18:34:13 +0000  
+**Author:** Claude  
+**Full hash:** `d4e55eff352ec3120ad396e600e35c250b06a0ec`
+
+From the design review:
+- Add src/qt/brand.h: the canonical design tokens (colors + status) mirroring
+  website/styles.css, so the wallet and site can share one palette.
+- Overview: relabel the balance grid in plain language — "Available:" ->
+  "Spendable now:", "Immature:" -> "Newly mined (maturing):", "Pending:" ->
+  "Incoming (unconfirmed):", "Watch-only:" -> "Watch-only (view only):", and
+  the "Spendable:" column header -> "Your wallet:" (de-dup). Mining-first
+  newcomers meet an "Immature" balance FIRST and couldn't parse it.
+- Fix the safety-severity inversion: the Recovery Key reveal (the wallet's
+  most dangerous screen) now leads with a red-alert warning line + icon,
+  instead of looking calmer than a routine send confirmation.
+- Nav tabs: "Overview" -> "Home", "Transactions" -> "History" (Alt+1..5
+  shortcuts unchanged) — more scannable.
+- Snap the FAQ dock body text to the brand text token (#f0e0c0).
+
+Refreshes the win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `27c5b8f` — website: phase-1 UI polish — clearer front door, contrast, brand unity
+
+**Date:** 2026-07-03 18:28:04 +0000  
+**Author:** Claude  
+**Full hash:** `27c5b8fde2a36ea82634d23e4d84285a6682dda9`
+
+From the design review:
+- Hero: replace the self-deprecating "trash fire" tagline with a literal
+  newcomer one-liner and retarget the CTAs to Get Started (Wallets) +
+  Start Mining; demote Explorer/GitHub to small tertiary links.
+- Confidence pass on the value-nihilistic lines (block-reward "worth
+  approximately 10 BRTO", premine "looking sad", ticker "probably never")
+  while keeping the playful brand tone elsewhere.
+- Nav: make the logo link home, reorder so newcomer links lead, and drop
+  the Specs(#specs)/Spec(/spec.html) name collision.
+- Accessibility: lift --muted #9a7a55 -> #b89a72 (was ~4.3:1, below AA),
+  aria-hidden on decorative emoji, solid-gold fallback on hero headings
+  where background-clip:text is unsupported.
+- Responsive: flex-wrap the nav so 8 links don't force horizontal scroll.
+- Brand: recolor logo.svg's gold to the published CSS family (#ffd170/
+  #f5a623/#c47d0e) so it matches the wordmark beside it.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `5005aaf` — test: stratum — deterministically cover the coinbase merkle branch
+
+**Date:** 2026-06-27 16:35:27 +0000  
+**Author:** Claude  
+**Full hash:** `5005aafdc46722a145019fdf5f541db12b155762`
+
+Round-1 review of the StratumJob serialization core found no production
+bug, but real test-coverage gaps: the regtest round-trip runs with an
+empty mempool and MWEB inactive at height 100, so its block is
+coinbase-only and the (highest-risk) merkle-branch loop never executed —
+a broken CoinbaseMerkleBranch/FoldMerkleBranch would still pass.
+
+- Add merkle_branch_matches_consensus_oracle: chain-independent check that
+  FoldMerkleBranch(cb, CoinbaseMerkleBranch(others)) == ComputeMerkleRoot
+  ({cb}++others) for 0..6 non-coinbase txids, exercising odd-duplication
+  at multiple levels against the consensus oracle.
+- Strengthen the prevhash wire check from length-only to a byte-permutation
+  check (catches gross word-swap errors; exact order pinned vs the target
+  cpuminer in phase 5).
+- Document that MWEB HogEx/mweb_block carry-through is validated on the
+  native mainnet/testnet end-to-end run (regtest can't activate MWEB by
+  height 100), and that the prevhash word order is a phase-5 pin.
+
+Test-only (plus one explanatory comment in stratumjob.cpp). Note: the test
+runs under a native build (make check); it can't link in this mingw-cross
+environment.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `71c7a2d` — tuned-miner phase 1+2 — StratumJob serialization core + round-trip test
+
+**Date:** 2026-06-27 16:15:57 +0000  
+**Author:** Claude  
+**Full hash:** `71c7a2dd9addec0877a9d98ebbafa7b3f6ba2ffc`
+
+The load-bearing, consensus-adjacent piece of the localhost Stratum bridge.
+Pure portable C++ (no Qt), in src/ so the boost test can link it.
+
+src/stratumjob.{h,cpp} — StratumJob:
+- buildFromTemplate(): snapshot the full block (mempool txs + MWEB HogEx +
+  mweb_block), rebuild the coinbase scriptSig as BIP34 height + an 8-byte
+  extranonce sentinel, serialize the txid preimage (NO_WITNESS|NO_MWEB) and
+  slice it into coinb1/coinb2 at the sentinel, and hand-compute the
+  coinbase-relative merkle branch over vtx[1..] (incl. HogEx).
+- reconstructBlock(): coinb1||en1||en2||coinb2 -> coinbase; reattach the
+  32-byte witness reserved value (required since segwit is active from
+  height 1, else ConnectBlock rejects bad-witness-nonce-size); recompute the
+  merkle root; apply ntime/nonce. MWEB rides along untouched. A debug fold
+  check guards against serialization/endianness bugs.
+- stratum:: wire helpers (BE32, prevhash word-swap, hex, merkle fold).
+
+src/test/stratum_roundtrip_tests.cpp — boost TestChain100Setup: template ->
+job -> reconstruct -> grind low-diff PoW -> ProcessNewBlock MUST accept
+(proves the witness-reserved-value reattach + MWEB carry-through end to
+end), plus wire-helper round-trips. NOTE: runs on a native build (make
+check); the mingw cross-build here can't link the console test binary.
+
+Inert until the bridge (phase 3) calls it; no shipped-wallet behavior change.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `bbc2cb2` — qt: tuned-miner phase 0 — shared-core refactor (qt/miningutil)
+
+**Date:** 2026-06-27 16:00:02 +0000  
+**Author:** Claude  
+**Full hash:** `bbc2cb27e79a0b59545e5096a4f61961eeb2f1f0`
+
+Groundwork for the opt-in external "Optimized miner" (localhost Stratum
+bridge). Extract MiningModel's three consensus-touching routines into a
+new MIT qt/miningutil so both the in-process engine and the upcoming
+StratumBridge share exactly one copy of each (preventing divergence of
+the block-submit / node-handle / payout paths, the classic source of a
+consensus or use-after-free regression):
+
+- MiningUtil::ResolveCoinbaseScript — per-wallet-name payout cache +
+  getNewDestination + isSpendable re-check (same QSettings key/behavior).
+- MiningUtil::CaptureNodeHandles — IBD guard + NodeContext chainman/mempool.
+- MiningUtil::SubmitBlock — the ProcessNewBlock try/catch (trusted
+  re-validation path).
+
+MiningModel now calls these; behaviour is unchanged (verbatim move). No
+consensus/validation/miner.cpp changes. Refreshes the win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `06cdc49` — qt: fix mining phase-2 round-1 review findings
+
+**Date:** 2026-06-27 15:46:15 +0000  
+**Author:** Claude  
+**Full hash:** `06cdc4945f9dc25292dc447853deec9a94b7102a`
+
+- Auto-pause stuck state (medium): m_paused was never reset when a mining
+  session began, so Stop-then-Start while still on battery (or still busy)
+  left workers idling forever with the status stuck on green "Mining" and
+  no "Paused" explanation — because poll()'s exchange() saw no transition
+  edge to emit. start() now resets m_paused to false so the first poll
+  re-derives the real state and emits the correct transition.
+- ETA overflow (medium): FormatDuration's day branch fed an unbounded
+  double into qRound(double)->int and tr's %n int argument; a near-zero
+  local hashrate can make the estimate exceed INT_MAX (undefined
+  behaviour). Clamp to "more than a thousand years" past a safe cap.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `087210d` — qt: mining phase-2 (2/2) — auto-pause on battery / while busy
+
+**Date:** 2026-06-27 15:28:29 +0000  
+**Author:** Claude  
+**Full hash:** `087210d54769f3aad87fdf760ec469259875032a`
+
+Adds opt-in auto-pause so the background miner yields when it should:
+
+- qt/miningpower.{h,cpp}: a platform-isolated helper (keeps <windows.h>
+  out of the Qt TUs). Windows uses GetSystemPowerStatus (AC line) and
+  GetLastInputInfo (idle time); other platforms stub to "never pause"
+  since idle detection isn't portable.
+- MiningModel: a new m_paused atomic the worker loop checks (idle 200ms
+  instead of hashing while paused; inner loop also bails on pause).
+  poll() re-reads the two settings each tick and pauses on battery and/or
+  while the user is active (idle < 120s), emitting pauseStateChanged.
+- MiningPage: two checkboxes on the Mine tab — "Pause while on battery
+  power" (default ON) and "Pause while I'm using the computer" (default
+  OFF) — persisted to QSettings (mining/pause_on_battery,
+  mining/pause_when_busy), the same keys the model reads. Status shows
+  "Paused - on battery" / "Paused - you're using the computer" while held.
+
+(The pause toggles live on the Mine tab rather than a separate
+Options>Mining pane, co-located with the miner; can be moved to Options
+if preferred.)
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `39744e5` — qt: mining phase-2 (1/2) — first-run disclosure + expected-time-to-block
+
+**Date:** 2026-06-27 15:22:06 +0000  
+**Author:** Claude  
+**Full hash:** `39744e515e62ed5d545c7db58e249e8da299bf86`
+
+- First-run disclosure modal: on the very first Start, a one-time
+  QMessageBox explains CPU/electricity use, that antivirus may flag the
+  wallet as a coin-miner (and how to restore it), the 100-confirmation
+  (~4h) coinbase maturity, and the pause options. Gated on a
+  mining/disclosure_shown QSettings flag.
+- Expected-time-to-block readout on the Mine tab: ClientModel gains
+  getNetworkHashPS() (via the getnetworkhashps RPC), and the page shows
+  the expected solo time = netHashPS * nPowTargetSpacing / yourHashPS,
+  refreshed every ~10s and formatted as a friendly duration.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `48ded90` — qt: recovery — point post-restore message at the enabled Encrypt Wallet action
+
+**Date:** 2026-06-26 22:41:46 +0000  
+**Author:** Claude  
+**Full hash:** `48ded9037450077d24c5d37738f4362c35bc4af5`
+
+Round-1 review (low): the post-restore info box told the user to encrypt
+the freshly-restored wallet via "Settings > Change Passphrase", but a
+newly-restored wallet is unencrypted, and for an unencrypted wallet
+setEncryptionStatus disables Change Passphrase and enables "Encrypt
+Wallet". The message now names the action that is actually enabled.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `426af1b` — qt: add wallet Recovery feature (Recovery Key + Recovery File)
+
+**Date:** 2026-06-26 22:30:06 +0000  
+**Author:** Claude  
+**Full hash:** `426af1bba3f3b9396ccf5f07ffb8f74fb63bf683`
+
+Gives users a recovery path when they no longer have their wallet.dat —
+both a seed-phrase-equivalent key and a full file export, in both
+directions (back up + restore).
+
+Backup side (File > Back Up Recovery Key...):
+- New interfaces::Wallet::getHDSeedWIF() reads the active HD seed as a WIF
+  straight from memory (mirrors dumpwallet's internals: GetHDChain().seed_id
+  -> GetKey -> EncodeSecret) — no plaintext seed is ever written to disk.
+  Caller must unlock first.
+- Dialog shows the recovery key masked (Show toggle, scrub-on-close, strong
+  "no screenshots / no screen-share, write it on paper" warnings), plus a
+  "Save full recovery file..." button that runs dumpwallet for a complete
+  export.
+
+Restore side (File > Restore from Recovery Key or File...):
+- New RestoreRecoveryActivity (WalletControllerActivity subclass) creates a
+  fresh BLANK, unencrypted wallet — never touching an existing wallet — then
+  on the worker thread runs sethdseed + rescanblockchain (key) or importwallet
+  (file, auto-rescans), with the standard progress dialog.
+- Dialog: key/file mode, the same name-validation + collision guards as the
+  Restore-from-Backup wizard, and a post-restore prompt to encrypt the new
+  wallet.
+
+Honest limitation surfaced in-UI: a recovery KEY restores HD-derived
+addresses only (rescan + keypool-gap limited); a recovery FILE is complete.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `1ebee21` — qt: enlarge Help & FAQ panel text for readability
+
+**Date:** 2026-06-26 20:51:36 +0000  
+**Author:** Claude  
+**Full hash:** `1ebee21ad6310e12b19e0306507b669b9ddee801`
+
+Bump the FAQ body font from 13px to 15px (with 1.4 line-height) and the
+question headings to 16px bold, so the panel is comfortably readable.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `32a7217` — qt: fix garbled em-dash in the mining Speed placeholder
+
+**Date:** 2026-06-26 20:33:09 +0000  
+**Author:** Claude  
+**Full hash:** `32a7217bca3bcadea57991cad80110d30ae47332`
+
+The idle/initial Speed value used QStringLiteral("\xe2\x80\x94"), but
+QStringLiteral treats those bytes as raw UTF-16 code units (rendering
+"a-circumflex" plus two invisible controls) rather than UTF-8. Decode it
+explicitly with QString::fromUtf8 so the em-dash renders correctly. (tr()
+strings were unaffected because tr() decodes its source as UTF-8.)
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `499fa76` — qt: mine — stamp coinbase height from the template's own parent
+
+**Date:** 2026-06-26 19:49:05 +0000  
+**Author:** Claude  
+**Full hash:** `499fa767139d5611728fdaa64f81cdfced5f6942`
+
+Round-2 review (low severity): the worker re-derived the BIP34 coinbase
+height from the live chain tip (::ChainActive().Tip()->nHeight + 1) in a
+separate cs_main critical section from CreateNewBlock. If the tip advanced
+in the gap — most plausibly a sibling worker connecting a block — the
+stamped height could mismatch the template's hashPrevBlock and the solved
+block would be rejected 'bad-cb-height' (one wasted re-grind; no consensus
+or safety impact).
+
+Derive the height from the template's own parent via
+LookupBlockIndex(block.hashPrevBlock) under the lock we already hold, so
+the coinbase height is always self-consistent with the block's parent
+regardless of tip races. Reloads a fresh template in the (deep-reorg) case
+where the parent has vanished.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `8a836b5` — qt: fix Mine-tab round-1 review findings
+
+**Date:** 2026-06-26 19:38:36 +0000  
+**Author:** Claude  
+**Full hash:** `8a836b56d367569f1be3b8f95f567c8b047c6097`
+
+Round-1 adversarial review of the in-process miner confirmed 4 distinct
+issues (6 reports):
+
+- Use-after-free on app quit while mining (HIGH). On shutdown the client
+  model is detached on the GUI thread before the node (mempool/chainstate)
+  is freed, but nothing stopped the worker threads, so they kept calling
+  BlockAssembler/IncrementExtraNonce/ProcessNewBlock on freed objects.
+  MiningPage::setClientModel(nullptr) now stops+joins the workers first,
+  which runs synchronously before appShutdown() tears the node down.
+
+- Per-worker extranonce band collapse (MED). Workers seeded a disjoint
+  extranonce band (id<<20), but IncrementExtraNonce keeps a process-global
+  static that resets the caller's value to 0 on the first call after a tip
+  change — collapsing the bands so two workers could grind the identical
+  header (wasted cores). Each worker now stamps its own band straight into
+  the coinbase (BIP34 height-first, <=100-byte scriptSig, merkle root
+  recomputed) — IncrementExtraNonce's layout without the shared static.
+
+- Cached payout address not re-validated for ownership (MED). The per-wallet
+  cached address was accepted on IsValidDestination alone, so a wallet
+  restored from an older backup (or a reused wallet name) could keep paying
+  rewards to an address the user no longer controls. Now also requires
+  wallet().isSpendable(dest); otherwise it mints and caches a fresh one.
+
+- Blocks-found under-count (LOW). poll() emitted blockFound at most once per
+  interval, so >1 block solved within one poll tick under-counted. Now emits
+  once per newly found block.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `96a843f` — qt: add in-process CPU mining "Mine" tab (Phase 1)
+
+**Date:** 2026-06-26 19:17:07 +0000  
+**Author:** Claude  
+**Full hash:** `96a843fa1a6db57b3aa30cae51259ed0f8fe1dc6`
+
+Adds a top-level Mine tab to burritocoin-qt that hashes scrypt in-process
+and pays block rewards directly into the open wallet — the "click one
+button, coins land in your wallet" onboarding feature (design Option B).
+
+Engine (qt/miningmodel.{h,cpp}):
+- Pool of std::thread workers, each assembling its own block template via
+  BlockAssembler (the same path generatetoaddress uses), stamping a
+  per-worker extranonce band into the coinbase so workers never duplicate
+  work, and walking the nonce space running CBlock::GetPoWHash (scrypt).
+- Solved blocks submitted via ChainstateManager::ProcessNewBlock, mirrored
+  from src/rpc/mining.cpp GenerateBlock; cs_main is NOT pre-locked around
+  ProcessNewBlock (it takes its own lock).
+- Coinbase address from interfaces::Wallet::getNewDestination(BECH32,
+  "Mining"), cached per wallet NAME in QSettings so multi-wallet users
+  aren't cross-credited.
+- Workers communicate only through atomics; a GUI-thread QTimer polls them
+  for hashrate, detects tip changes (bumping an epoch so workers reload),
+  and emits Qt signals. Stop() joins within a single hash, so it feels
+  instant.
+
+UI (qt/miningpage.{h,cpp}):
+- Core selector: slider 1..idealThreadCount defaulting to 1, plus a
+  "Use all cores" checkbox; core count locked while mining.
+- Start/Stop, live status + hashrate + blocks-found readout, and an
+  up-front note that mined coins need 100 confirmations (~4h) to mature.
+
+Wiring: Mine tab (Alt+5, tx_mined icon) into burritocoingui
+createActions/toolbar/setWalletActionsEnabled + gotoMiningPage;
+WalletFrame/WalletView page plumbing; Makefile.qt.include registration
+(wallet-only). Refreshes the prebuilt win64 binary.
+
+This is the Phase-1 skeleton: power/idle pause, the first-run disclosure
+modal, expected-time-to-block, and the Options>Mining pane come next.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `446cc2b` — qt: restore wizard — make copy-failure rollback non-destructive
+
+**Date:** 2026-06-26 14:08:39 +0000  
+**Author:** Claude  
+**Full hash:** `446cc2b41f36745d053f5e86b625ac00363c4cd7`
+
+Round-2 review flagged that the copy-failure rollback used
+QDir::removeRecursively() on the freshly mkpath()'d target folder. The
+comment assumed the folder is always the empty stub we just created, but
+mkpath() returns true whether it created the folder or it already
+existed, and QFile::copy also fails (refuses to overwrite) if a
+wallet.dat materialised in the folder during the copy. In that narrow
+TOCTOU window removeRecursively() would delete a foreign wallet.dat.
+
+Replace with QDir::rmdir(name), which only removes an EMPTY directory:
+it still cleans up the empty stub on a normal copy failure (disk full,
+source unreadable, no write permission) but is a harmless no-op if the
+folder unexpectedly contains data. The rollback now cannot cause data
+loss by construction.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `7c05e19` — qt: address restore-wizard adversarial review findings
+
+**Date:** 2026-06-25 23:41:06 +0000  
+**Author:** Claude  
+**Full hash:** `7c05e19fb254d83276bb48f316699b71c33e4a68`
+
+Four findings from the post-implementation adversarial review (all
+medium/low; no data-loss bugs):
+
+- Validation/accept mismatch (medium). revalidate() only checked the
+  listWalletDir() recognized-wallet set, while the accept handler also
+  checked QDir::exists(). A stray empty/non-wallet folder in the wallets
+  dir would pass the live check, then trip the accept-time re-check with
+  a misleading "appeared while this dialog was open" message. Now
+  revalidate() checks both, and the accept-time error reads "already
+  exists in your wallets directory" -- accurate whether the folder
+  pre-existed or appeared during the dialog.
+- BDB endianness (low). The 16-byte signature sniff accepted only
+  little-endian BDB BTREE magic (62 31 05 00). Berkeley DB writes its
+  meta-page magic in the host's native byte order, so a legitimate
+  backup from a big-endian build was silently refused. Now accepts both
+  endians, mirroring src/wallet/bdb.cpp.
+- Windows DOS device names (low). The QRegExpValidator permitted CON,
+  PRN, AUX, NUL, COM0..9 and LPT0..9. On Windows, mkpath() of these
+  fails with a generic "Could not create the folder" message. Added a
+  shared IsReservedWalletName() helper (covers wallet.dat, dot-names,
+  and the full Windows reserved set) used by both revalidate() and the
+  accept-time re-check, on every platform so restored wallets stay
+  portable.
+- Accept-handler re-entrancy (low). The accept lambda called
+  QApplication::processEvents() to keep the progress dialog responsive
+  while QFile::copy ran. A queued second click (double-click or
+  Enter+click) could re-enter the lambda mid-copy and pop a spurious
+  "appeared while this dialog was open" message, even though the outer
+  invocation went on to succeed. Now disables the button row at the
+  very top of the accept handler and re-enables on every error return.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `bc8814a` — qt: add File > Restore Wallet from Backup... wizard
+
+**Date:** 2026-06-25 23:34:22 +0000  
+**Author:** Claude  
+**Full hash:** `bc8814aa52f636db1ea34b89c318abbe1aeda496`
+
+Single modal dialog that turns the multi-step "quit, rename a folder,
+copy a file, rename it to wallet.dat, restart, open" recovery procedure
+into a guided flow. Does not require a restart: hands off to the same
+OpenWalletActivity the Open Wallet submenu uses, so the restored wallet
+appears in the running app.
+
+Safety properties:
+- Hard refusal on every collision (on-disk folder, currently loaded
+  wallet, reserved names wallet.dat / "." / ".."). No overwrite path
+  exists in the code.
+- Two-layer name validation: QRegExpValidator at the keystroke level
+  ([A-Za-z0-9_][A-Za-z0-9 _-]{0,63}) blocks slashes, backslashes and
+  dots; an explicit reserved-name re-check catches anything that slips
+  through paste.
+- 16-byte signature sniff (LooksLikeWalletDat) accepts both BDB legacy
+  wallets and SQLite descriptor wallets; refuses random files before any
+  copy happens.
+- Accept-time re-checks of source readability, signature, and both
+  collision sets close the TOCTOU window between green-light and click.
+- Copy under an indeterminate QProgressDialog so multi-MB backups don't
+  look like a UI freeze. Original backup file is never modified
+  (QFile::copy is read-source / write-target).
+- On copy failure, the empty wallets/<name>/ stub is removed so the name
+  isn't permanently blocked.
+- On loadWallet failure, the copied wallets/<name>/wallet.dat is
+  intentionally left on disk so the user can inspect/retry; the existing
+  Open wallet failed dialog from OpenWalletActivity::finish() surfaces
+  the error (no layered dialog).
+- The new action and slot are inside #ifdef ENABLE_WALLET; the
+  --disable-wallet build is unaffected.
+- The action is enabled by setWalletController (no current wallet
+  required), so the wizard runs on a fresh install / lost-wallet
+  recovery scenario.
+
+Includes:
+- src/qt/burritocoingui.h: new m_restore_wallet_action member next to
+  m_open_wallet_action; new public Q_SLOT restoreWalletFromBackup().
+- src/qt/burritocoingui.cpp: new helpers RestoreWalletDir and
+  LooksLikeWalletDat next to GetWalletDiskPaths; restoreWalletFromBackup
+  body modelled on the showVerifyBackupKey inline-QDialog idiom.
+- File menu order: Create Wallet -> Open Wallet -> Restore Wallet from
+  Backup... -> Close Wallet -> Close All Wallets.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `ea635e9` — qt: clarify backup/restore guidance — drop WIF from the happy path
+
+**Date:** 2026-06-25 22:12:12 +0000  
+**Author:** Claude  
+**Full hash:** `ea635e914acef3292e9c62cb4231de5b36ed8f5c`
+
+User-testing surfaced that the Verify Backup Key dialog and the FAQ
+implied WIFs were part of normal use. They are not — Core never exposes
+WIFs unless the user runs dumpprivkey/dumpwallet themselves. Most users
+back up wallet.dat and never see a WIF.
+
+- Verify Backup Key dialog now opens with "Most users don't need this"
+  and explains the dialog is only for users who exported a single WIF
+  separately and want to verify their written copy. The input
+  placeholder explicitly says "not your wallet passphrase".
+- FAQ: replaced the single "How do I restore from a backup file or a
+  key?" entry with four targeted Qs:
+  - Restore from wallet.dat (the normal path)
+  - How do I know the restore worked? (verify by observation, not WIFs)
+  - I forgot the passphrase (honestly: unrecoverable, beware scams)
+  - Restoring from paper WIFs (advanced, importprivkey/importwallet)
+- FAQ: reframed the Verify Backup Key Q to make clear it is not for
+  testing a wallet.dat backup.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `b477cc1` — qt: fix UX-feature review findings (round 2)
+
+**Date:** 2026-06-25 18:14:47 +0000  
+**Author:** Claude  
+**Full hash:** `b477cc1f40f2887ff064cfa263a8603e1e2c9029`
+
+Round-2 adversarial review confirmed 3 distinct issues (5 reports):
+
+- Backup reminder (HIGH): "I've Already Backed Up" was a RejectRole
+  button, so pressing Esc / closing the dialog activated it and silently
+  marked the wallet backed up. It is now ActionRole (explicit click only),
+  with a separate RejectRole "Remind Me Later" no-op as the Esc/close
+  target.
+- Build (HIGH): the backup-badge click handler calling
+  walletFrame->backupWallet() sat outside #ifdef ENABLE_WALLET, where
+  WalletFrame is an incomplete type, breaking --disable-wallet builds. Now
+  guarded.
+- Backup badge (MED): closing one wallet hid the badge and it was not
+  re-shown for the remaining current wallet. removeWallet now refreshes
+  the badge for the current wallet (or hides it when none remain).
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `0e9f1b4` — chore: pin project default model to Claude Opus 4.8
+
+**Date:** 2026-06-25 17:55:46 +0000  
+**Author:** Claude  
+**Full hash:** `0e9f1b46f32be385735cadd3a8150e685b1b2be5`
+
+Add .claude/settings.json with "model": "claude-opus-4-8" so Claude Code
+sessions opened on this repository default to Opus 4.8 instead of falling
+back to the account default. Project settings override the user-level
+~/.claude/settings.json but are themselves overridden by a --model flag,
+.claude/settings.local.json, or org-managed policy.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `7cdfeb3` — qt: fix UX-feature review findings (round 1)
+
+**Date:** 2026-06-25 16:14:45 +0000  
+**Author:** Claude  
+**Full hash:** `7cdfeb3c5b4c77a4e47007c8683d0c420f5cc7d8`
+
+Adversarial review of the four new UX features confirmed 3 distinct
+issues (reported 10x across dimensions):
+
+- Send confirmation (HIGH): for multi-recipient sends the HTML recipient
+  block was placed into detailed_text, which QMessageBox renders as PLAIN
+  text, so the "Show Details..." pane showed raw markup. Now a separate
+  plain-text recipient list feeds detailed_text; the rich-text block is
+  used only on the single-recipient inline path.
+- Backup badge (MED): the message() hook matched tr("Backup Successful")
+  in the BurritoCoinGUI context, but the title is emitted from WalletView.
+  Now matches QCoreApplication::translate("WalletView", ...) so the badge
+  flips correctly in translated locales too.
+- Backup badge (LOW): the badge could remain visible after the last
+  wallet is closed. Now hidden in removeWallet(), mirroring the HD/
+  encryption status icons.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `83ba8ca` — qt: four wallet UX improvements (safety + simplicity)
+
+**Date:** 2026-06-25 15:53:53 +0000  
+**Author:** Claude  
+**Full hash:** `83ba8ca6b526ec33240624f0a9efaaf2275a9aa6`
+
+1. Send safety confirmation: the send confirmation dialog now shows the
+   destination address prominently (monospace, highlighted, on its own
+   line) with an irreversibility warning, so users can verify the address
+   before sending. (sendcoinsdialog.cpp)
+
+2. Receive: larger QR code (QR_IMAGE_SIZE 300 -> 400; the fixed-size
+   dialog auto-grows) and the existing "Copy Address" button is made the
+   default, focused action for one-click sharing. (qrimagewidget.h,
+   receiverequestdialog.cpp)
+
+3. Backup-status badge: a clickable status-bar indicator showing
+   "Back up wallet" (red) or "Backed up" (green) per wallet, click to back
+   up. Flips to backed-up when any backup succeeds (caught centrally in
+   message()), or when the user confirms in the reminder. Hidden for
+   private-keys-disabled wallets. (burritocoingui.*)
+
+4. First-run onboarding: a friendly Welcome dialog for brand-new setups
+   with no wallet, offering to create one (reusing CreateWalletActivity);
+   the existing first-run backup reminder then guides the backup. Runs
+   once, gated by a QSettings flag. (burritocoingui.*)
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `17fd6b6` — qt: fix Window-menu FAQ entry rendering as "Help  FAQ" (round 3)
+
+**Date:** 2026-06-25 14:33:26 +0000  
+**Author:** Claude  
+**Full hash:** `17fd6b6e07d10edc6eea3318f9f20a4cd12ca6f0`
+
+QDockWidget::toggleViewAction()'s text mirrors the dock's windowTitle
+verbatim. Qt's menu renderer treats '&' in QAction text as a mnemonic
+prefix and strips it, so the action text "Help & FAQ" was rendering in
+the Window menu as "Help  FAQ" (two spaces) while the dock title bar
+still showed "Help & FAQ". Override the toggle action's text to use the
+escaped "Help && FAQ", which the menu renderer collapses back to a
+literal "Help & FAQ", while leaving the dock window title untouched.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `37adff2` — qt: fix wallet-safety review findings (round 2)
+
+**Date:** 2026-06-25 13:45:10 +0000  
+**Author:** Claude  
+**Full hash:** `37adff24f43d5e262ad9968860786cbea853053d`
+
+Round-2 adversarial review confirmed 2 low-severity issues:
+
+- Verify Backup Key's QLineEdit is now scrubbed (setText of spaces of the
+  same length, then clear()) before the dialog returns. This matches the
+  SecureClearQLineEdit pattern used for the wallet passphrase field in
+  askpassphrasedialog.cpp; plain QLineEdit::clear() does not overwrite the
+  prior heap buffer.
+- The new "Verify Backup Key..." action used the same Alt+V mnemonic as
+  the existing "Verify message..." in the File menu, which on Win/Linux
+  cycles instead of activating. Moved it to "Verify Backup &Key" (Alt+K).
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3f7ed19` — qt: fix wallet-safety review findings (round 1)
+
+**Date:** 2026-06-25 05:10:08 +0000  
+**Author:** Claude  
+**Full hash:** `3f7ed19830775791e87350f0914aa846f3078adc`
+
+Adversarial review of the new wallet-GUI code surfaced 5 low-severity
+correctness/UX issues, all fixed here:
+
+- GetWalletDiskPaths now detects a bare single-file wallet (-wallet=foo.dat)
+  instead of assuming the name is a sub-folder, so the shown path is real.
+- The periodic backup reminder only prints the exact wallet.dat path when it
+  exists on disk, otherwise points at the folder (never names a missing file).
+- Verify Backup Key hints are network-neutral (the 'starts with P' WIF prefix
+  is mainnet-only; wrong on testnet/regtest).
+- dumpwallet examples in the seed reminder and FAQ are now cross-platform
+  (Windows and macOS/Linux paths) instead of Windows-only.
+- The FAQ dock's initial width is applied after the window is shown, so
+  resizeDocks() actually takes effect.
+
+Validated under Wine/xvfb: with -disablewallet the node initialises and the
+GUI comes up cleanly; the wallet-enabled path crashes in WalletFrame/
+OverviewPage construction even with all new safety code disabled, confirming
+that is a pre-existing Wine limitation (the binary runs correctly on real
+Windows), not a regression from these changes.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `96806fa` — qt: add local Verify Backup Key tool and right-side Help & FAQ panel
+
+**Date:** 2026-06-25 04:38:28 +0000  
+**Author:** Claude  
+**Full hash:** `96806fa486adf8b1bad0482fd7c12b7a367691b3`
+
+Verify Backup Key (File > Verify Backup Key..., and a button in the
+periodic backup reminder): paste a written-down WIF and confirm, entirely
+on this computer, whether it belongs to the open wallet. WalletModel
+decodes the key (DecodeSecret), derives its standard destinations
+(GetAllDestinationsForKey with a null MWEB scan secret), and checks
+ownership via interfaces::Wallet::isSpendable. The key is never
+transmitted, saved, or logged; the input is password-masked with a
+"Show key" toggle.
+
+Help & FAQ: a dockable, always-available panel on the right side of the
+window (toggle under the Window menu), with fact-checked answers on where
+wallet.dat lives, what losing it means, what the HD seed does and does
+NOT restore (imported keys, labels), encryption irreversibility, restore
+steps, and the verify tool. Uses a read-only QTextEdit because this
+depends-Qt is built without the textbrowser feature.
+
+Refreshes the prebuilt win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e5b40b4` — qt: add wallet-safety reminders and "Show Wallet File Location"
+
+**Date:** 2026-06-25 04:14:17 +0000  
+**Author:** Claude  
+**Full hash:** `e5b40b413e6520512d8eb7a7f856259b3957e345`
+
+Help users avoid losing access to their coins:
+
+- Rotating status-bar tip that cycles safety reminders, led by
+  "Losing your wallet.dat file means losing access to your coins -
+  back it up."
+- Once-per-launch backup nudge (first open, then every 3rd) showing the
+  exact wallet.dat path, with "Back Up Now", "Show Me the File", and
+  "I've Already Backed Up" actions.
+- Every-4th-launch paper-backup nudge for spendable HD wallets, with
+  step-by-step dumpwallet instructions and an "Open Node Window" button.
+- New File > Show Wallet File Location... dialog (Open Folder / Copy
+  Path / Back Up Now) so users never have to hunt for wallet.dat.
+
+Open-count is tracked in QSettings; reminders fire at most once per
+launch after the first wallet becomes active. Refreshes the prebuilt
+win64 binary.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `29a7d53` — release: refresh wallet binary with Create Wallet info popups
+
+**Date:** 2026-06-25 03:45:00 +0000  
+**Author:** Claude  
+**Full hash:** `29a7d53e59693660131b4e73b5e4156dc911e13f`
+
+sha256: 080c7fe2c85c5a3df01144fc9bdd087ccc2a0d5ce0f1a0bbdbdc5bb9662c1e0a
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `281f344` — qt: add per-option info popups to the Create Wallet dialog
+
+**Date:** 2026-06-25 03:44:21 +0000  
+**Author:** Claude  
+**Full hash:** `281f34474f8ce07c28627fdbd692aa77e9887c48`
+
+Each checkbox now has a small "?" button next to it. Clicking it opens
+a QMessageBox that explains, in plain language:
+
+  - What the option does
+  - How it changes the day-to-day feel of the wallet
+  - A real-world example so the user can self-classify
+  - A clear recommendation (especially Encrypt Wallet, which most
+    users should turn on)
+
+Covers all four options: Encrypt Wallet, Disable Private Keys, Make
+Blank Wallet, and Descriptor Wallet (the last is currently disabled,
+and the popup says so).
+
+The original tooltips remain, so power users still get the short
+hover text. The "?" buttons are autoRaise QToolButtons with a
+pointing-hand cursor for discoverability without crowding the dialog.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `1dd9d73` — release: refresh wallet binary with 25% larger base font
+
+**Date:** 2026-06-25 03:01:11 +0000  
+**Author:** Claude  
+**Full hash:** `1dd9d73340b93bdcb6229c7bb4f6d83ff04f6ed8`
+
+sha256: 75ef6b938039bd02b660e0838304c8f7cc4f149a33d25340146eaec881de5b61
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `6be04f3` — qt: scale the base application font up 25% for readability
+
+**Date:** 2026-06-25 03:01:00 +0000  
+**Author:** Claude  
+**Full hash:** `6be04f311079f58e954e0a719821f5aa4d2e86ea`
+
+Default labels (sync overlay text, the sync-detail grid, menus, tabs)
+rendered quite small on high-resolution displays. Rather than hardcode
+sizes on individual widgets, scale the whole application's base font by
+1.25x right after the QApplication is constructed.
+
+It's derived from QApplication::font().pointSizeF(), so it remains
+responsive to the platform/user font and DPI settings, and is guarded
+against pixel-defined fonts (pointSizeF <= 0) so we never set a negative
+size. Every default-font widget inherits the larger size consistently.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `9cd5d08` — release: refresh wallet binary with redesigned no-wallet screen
+
+**Date:** 2026-06-25 02:53:25 +0000  
+**Author:** Claude  
+**Full hash:** `9cd5d08736ac2c24ff962a64b99c9f4b617f2071`
+
+Includes the previous commit's walletframe.cpp redesign of the
+empty-state shown when no wallet is loaded.
+sha256: 7210ae047eeb8bb56478f9a173666ec18e7ec1146a1154bed477569162acbb37
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e567e63` — qt: give the "no wallet loaded" screen real visual weight
+
+**Date:** 2026-06-25 02:53:10 +0000  
+**Author:** Claude  
+**Full hash:** `e567e631cc95bfa10ea443293b9c7a89bd880cc7`
+
+The empty-state when no wallet is loaded was a tiny black system-font
+label and a default-styled button stranded in the middle of the
+window, ignoring the available space and looking like an error.
+
+Redesign it as a proper empty-state screen:
+
+- Big "🌯 BurritoCoin" title in BurritoCoin gold (#f5a623).
+- Sub-tag "No wallet is loaded." in a muted gold.
+- One readable, word-wrapping hint sentence ("Create a new wallet... or
+  open an existing one with File > Open Wallet"). RichText so the menu
+  path can be bold.
+- Big gold "Create a new wallet" call-to-action (260×52, bold, rounded,
+  hover/pressed states, pointing-hand cursor) matching the new sync-
+  overlay Hide button so the palette is consistent.
+- Dark warm background on the group box to fill the empty space
+  instead of bare white.
+
+Font sizes are derived from the platform's base font size (scaled with
+qMax(min, base*ratio)) so the screen stays readable on hi-DPI and on
+small windows. Stretch ratios (2 above, 3 below) keep the cluster
+slightly above center, which feels natural rather than mathematically
+centered.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `57d9651` — release: refresh wallet binary with grouped/prominent sync-overlay Hide button
+
+**Date:** 2026-06-25 02:45:44 +0000  
+**Author:** Claude  
+**Full hash:** `57d9651e4d6110109a94e491dd03188982103393`
+
+Rebuild including the prior commit's modaloverlay UI change.
+sha256: bbcd700efd443a915e44eed3e9a6bfe5c2b962bf799a1ebefdc5beba72ac75da
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `4ef476f` — qt: group sync-overlay Hide button with the warning, make it prominent
+
+**Date:** 2026-06-25 02:45:25 +0000  
+**Author:** Claude  
+**Full hash:** `4ef476f0d59a7d123239a26a175cae622b8bf4e8`
+
+On the modal sync overlay the Hide button sat alone in a bottom row,
+far from the "Recent transactions may not yet be visible" warning at
+the top, with a large empty gap between them.
+
+Move closeButton directly beneath the warning text so the two read as
+one unit, and restyle it: 220x46, bold, BurritoCoin gold (#f5a623)
+with hover/pressed states, pointing-hand cursor, relabeled "Hide this
+notice". Remove the now-empty bottom button row and fix the layout
+stretch list accordingly.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e6c5bca` — release: refresh Windows GUI wallet binary with Debug window fix
+
+**Date:** 2026-06-25 02:28:46 +0000  
+**Author:** Claude  
+**Full hash:** `e6c5bcab3c6f64e0fb4fed12b2e1b02ac1128c81`
+
+Rebuild of contrib/release/burritocoin-qt-win64.exe including the
+preceding commit's fix that adds the Node window action to the Help
+menu. Users on the previous binary had no way to open the RPC console.
+
+sha256: ceff2acf8eb8301f527e9fd0e75b98d1da7bcfb44c846b76857f168afa638a90
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `5eb88b6` — qt: add Debug/Node window action to the Help menu
+
+**Date:** 2026-06-25 02:28:18 +0000  
+**Author:** Claude  
+**Full hash:** `5eb88b68e7ce69b03511719256db2b13e9bd099b`
+
+createActions() created openRPCConsoleAction ("Node window") and the
+RPC console widget was compiled in, but createMenuBar() never added the
+action to the Help menu. Result: users had no way to open the Debug
+window from the UI (the Help menu only showed Command-line options,
+About BurritoCoin Core, About Qt).
+
+Match upstream Litecoin: add openRPCConsoleAction as the first Help
+menu entry, guarded by walletFrame so the GUI-without-wallet build
+still works.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `a501313` — depends: make the Windows GUI build reproducible (Qt GCC-13 patch + libsodium)
+
+**Date:** 2026-06-25 02:13:57 +0000  
+**Author:** Claude  
+**Full hash:** `a501313758507c8501aa7d276cc360b2776f5eb5`
+
+Two fixes that were previously applied by hand during the cross-build are
+now committed so a clean checkout builds burritocoin-qt.exe end to end:
+
+1. Qt 5.9.8 vs modern GCC (13): qtbase wouldn't compile.
+   - qglobal.h used std::numeric_limits / fixed-width ints without
+     including <limits>/<cstdint> (GCC 13 no longer pulls them in
+     transitively).
+   - qwindowsmousehandler.cpp redefined tagTOUCHINPUT, which modern
+     mingw-w64's winuser.h now provides, via a guard that fired on any
+     MinGW. New depends/patches/qt/qt-gcc13-mingw.patch drops the
+     bad guard clause and adds the missing includes; wired into qt.mk's
+     patch list + preprocess step.
+
+2. libsodium was missing from depends entirely, but the build links
+   -lsodium (pulled in by ZeroMQ, configure.ac), so the final link of
+   burritocoind/burritocoin-qt failed with "cannot find -lsodium".
+   Add depends/packages/libsodium.mk (1.0.18, static) and register it
+   in packages.mk.
+
+With these, the dead-URL fixes, and the bdb.cpp/fs.cpp source fixes,
+`make -C depends HOST=x86_64-w64-mingw32 && ./configure && make`
+produces the wallet from a clean tree with no manual intervention.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `b8a8110` — release: add prebuilt Windows GUI wallet binary
+
+**Date:** 2026-06-25 02:11:09 +0000  
+**Author:** Claude  
+**Full hash:** `b8a8110ba89a8094acf3875763cd01f003a3848f`
+
+contrib/release/burritocoin-qt-win64.exe — BurritoCoin Core GUI wallet
+for 64-bit Windows, cross-compiled from this tree against the (now
+fixed) depends. Committed so it can be pulled directly, since the
+out-of-band file transfer was unreliable.
+
+Force-added past .gitignore (which ignores *.exe and the release dir).
+sha256: 0fb05bdb2e316f0a2f6e09a5a098f8040f3b69eb67c9a6871c62796f0142098f
+
+Note: GitHub Releases is the cleaner long-term channel for binaries;
+this commit can be dropped from history later if repo size matters.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `2651abb` — util: include <limits> in fs.cpp for the Windows FileLock path
+
+**Date:** 2026-06-25 01:57:22 +0000  
+**Author:** Claude  
+**Full hash:** `2651abbace6b6b9130870e5ea0c2de4591dd1da6`
+
+fsbridge::FileLock::TryLock() (the WIN32 branch) calls
+std::numeric_limits<DWORD>::max() but fs.cpp never included <limits>.
+Older GCC pulled it in transitively; GCC 13 does not, so the Windows
+cross-build failed with "'numeric_limits' is not a member of 'std'".
+The POSIX branch never references it, which is why native Linux builds
+were unaffected and the bug stayed latent.
+
+Add an unconditional #include <limits>.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `edf4f51` — wallet: use boost-1.70-compatible copy_file option in BerkeleyDatabase::Backup
+
+**Date:** 2026-06-25 01:54:51 +0000  
+**Author:** Claude  
+**Full hash:** `edf4f51e0e6da1f57dcb6a51ceb7c3243758ec7c`
+
+bdb.cpp called fs::copy_file with fs::copy_options::overwrite_existing —
+the std::filesystem / boost>=1.74 spelling. But fs is aliased to
+boost::filesystem (src/fs.h) and depends pins boost 1.70, whose API is
+the singular fs::copy_option::overwrite_if_exists. The code only
+compiled where a newer *system* boost happened to be installed; against
+the project's own pinned depends boost (e.g. the Windows cross-build) it
+failed with "'fs::copy_options' has not been declared", breaking the
+wallet build.
+
+Switch to the pinned-boost spelling. boost retains copy_option as a
+deprecated alias in newer versions, so system-boost builds keep working.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `e7ba36c` — depends: fix dead qrencode-3.4.4 download URL
+
+**Date:** 2026-06-25 01:46:32 +0000  
+**Author:** Claude  
+**Full hash:** `e7ba36ca88462723f62663a6285fedebe2989340`
+
+Third dead source URL in the depends tree: fukuchi.org no longer serves
+qrencode-3.4.4.tar.bz2 (404), and the burritoco.in fallback lacks it,
+so the GUI build can't fetch the QR-code library used for address QR
+codes in the wallet.
+
+Point download_path at distfiles.macports.org, which serves the
+byte-identical tarball (verified against the existing
+sha256 efe5188…1fa5). Hash unchanged — availability fix only.
+
+With this, openssl, and Qt fixed, the full Windows GUI build can fetch
+all of its dependencies again. Follow-up: mirror these tarballs to
+burritoco.in/depends-sources so the project's own fallback is complete.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `3197451` — depends: fix dead Qt 5.9.8 download URL
+
+**Date:** 2026-06-25 01:32:42 +0000  
+**Author:** Claude  
+**Full hash:** `3197451a186b2d26ef9326778c4c917e2794767c`
+
+Same problem as the openssl fix: download.qt.io purged the old 5.9.x
+releases from official_releases/, so the pinned URL 404s and the GUI
+build can't fetch qtbase/qttranslations/qttools. The burritoco.in
+fallback mirror doesn't have them either.
+
+Qt moved old releases to download.qt.io/archive/, which still serves
+the byte-identical tarballs (verified against the existing sha256
+hashes). Switch download_path from official_releases/ to archive/.
+Hashes unchanged — pure availability fix.
+
+Follow-up: mirror the three Qt 5.9.8 submodule tarballs to
+burritoco.in/depends-sources so the project's own fallback can serve
+them.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `23b3668` — depends: fix dead openssl-1.0.1k download URL
+
+**Date:** 2026-06-25 01:24:48 +0000  
+**Author:** Claude  
+**Full hash:** `23b3668ef95dfd93dd52b382360ff300640a7d9e`
+
+The pinned source URL (openssl.org/source/old/1.0.1) now 404s — OpenSSL
+purged the old 1.0.x releases from that path — which breaks every
+from-source build at the depends stage (Qt links openssl, so the whole
+GUI build dies). The configured FALLBACK_DOWNLOAD_PATH
+(burritoco.in/depends-sources) is also missing this file, so there's no
+recovery.
+
+Point download_path at the mirrorservice.org archive, which still hosts
+the byte-identical tarball (verified against the existing
+sha256 8f9faea…7a41c). Hash is unchanged, so this is a pure
+availability fix.
+
+Follow-up worth doing: upload openssl-1.0.1k.tar.gz to
+burritoco.in/depends-sources so the project's own fallback mirror can
+serve it independently of third-party mirrors.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `a83de56` — Auto-update CHANGELOG.md
 
 **Date:** 2026-06-25 00:23:22 +0000  
 **Author:** BurritoCoinDev  
-**Full hash:** `f9465962b2f73e812fbd2a5b315a5d74c1bdba91`
+**Full hash:** `a83de56a7a6c2b86c2337e1be45d6b67c697bcda`
+
+## `15da8cf` — Persist BurritoCoin explorer customizations as a portable patch
+
+**Date:** 2026-06-25 00:23:22 +0000  
+**Author:** BurritoCoinDev  
+**Full hash:** `15da8cfb1554724427fb559060a1518cebcf7182`
 
 contrib/explorer/burritocoin-explorer.patch captures every change needed
 to turn upstream btc-rpc-explorer (commit 26e282a) into the BRTO
@@ -28,11 +2170,11 @@ blanket *.patch rule would otherwise hide it.
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `410f8db` — Fix prose-table word wrapping on wallets page
+## `a77e1b4` — Fix prose-table word wrapping on wallets page
 
 **Date:** 2026-06-24 22:40:49 +0000  
 **Author:** Claude  
-**Full hash:** `410f8db38976cb22b3edc5b45e54a2acb5838a56`
+**Full hash:** `a77e1b462cae62b3576c7039fdb77fc3d972fbe1`
 
 The "How You'll Actually Use a Wallet" comparison table reused the
 .spec-table class, which sets word-break:break-all and a monospace font
@@ -45,11 +2187,11 @@ other pages are unaffected.
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `e110599` — Add Wallets & Keys explainer page to website
+## `44507ea` — Add Wallets & Keys explainer page to website
 
 **Date:** 2026-06-24 22:22:45 +0000  
 **Author:** Claude  
-**Full hash:** `e11059944956af3e841590b3b5d2eabfac04c0eb`
+**Full hash:** `44507eabdaefae903a9debbc0fad3453a819cffe`
 
 New /wallets.html explains the wallet-vs-address distinction in plain
 language: a wallet is a keychain holding many addresses, you receive to
@@ -66,11 +2208,11 @@ step, callout, spec-table, faq-item).
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `f824343` — Add VPS website deploy script
+## `779604b` — Add VPS website deploy script
 
 **Date:** 2026-06-23 16:01:54 +0000  
 **Author:** Claude  
-**Full hash:** `f824343e2d700b6872aedc48588770ba7f853d76`
+**Full hash:** `779604bc7aa20973e704c9c964348369b34533d8`
 
 contrib/vps/deploy-website.sh syncs the repo's website/ directory into
 the nginx web root and reloads nginx. Run on the VPS as root after a
@@ -90,11 +2232,11 @@ banners, preflight checks).
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `9dfad15` — Fix macOS build instructions: BSD sha256sum + Homebrew prefix
+## `a7fa1f1` — Fix macOS build instructions: BSD sha256sum + Homebrew prefix
 
 **Date:** 2026-06-23 15:37:54 +0000  
 **Author:** Claude  
-**Full hash:** `9dfad15e4dd0e43cc965ab16be10e303e38bdf8e`
+**Full hash:** `a7fa1f187121ea489b9369d50227b1d80a883bcd`
 
 Three cascading issues uncovered while testing the mine-mac.html build
 flow on a fresh macOS Tahoe / Apple Silicon machine:
@@ -119,11 +2261,64 @@ flow on a fresh macOS Tahoe / Apple Silicon machine:
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `1ccab18` — Add CLAUDE.md with project identity and audit-cycle closure
+## `fae86dd` — Add VPS website deploy script
+
+**Date:** 2026-06-23 16:01:54 +0000  
+**Author:** Claude  
+**Full hash:** `fae86ddeac5362d79ad0ed25225a678a93da9c44`
+
+contrib/vps/deploy-website.sh syncs the repo's website/ directory into
+the nginx web root and reloads nginx. Run on the VPS as root after a
+git pull.
+
+Defaults the web root to /var/www/burritoco.in if it exists, otherwise
+/var/www/html. Overridable via positional arg or $BRTO_WEBROOT.
+
+Supports --prune (delete files in webroot not in website/) and
+--dry-run (preview changes without touching anything, nginx not
+reloaded). Runs `nginx -t` before reload, so a bad nginx config bails
+out cleanly instead of breaking the live site.
+
+Mirrors the style of contrib/vps/setup.sh (color helpers, step
+banners, preflight checks).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `b0ffe2c` — Fix macOS build instructions: BSD sha256sum + Homebrew prefix
+
+**Date:** 2026-06-23 15:37:54 +0000  
+**Author:** Claude  
+**Full hash:** `b0ffe2cd8070b53e783d748550d6f04b643a0812`
+
+Three cascading issues uncovered while testing the mine-mac.html build
+flow on a fresh macOS Tahoe / Apple Silicon machine:
+
+1. contrib/install_db4.sh — macOS Tahoe (15+) ships a BSD-style
+   `sha256sum` that does not support GNU `-c` check mode. The script's
+   `check_exists sha256sum` returned true and the verification step
+   exploded with a `usage:` error, so BDB 4.8 was never built. Detect
+   Darwin and prefer `shasum -a 256` there.
+
+2. website/mine-mac.html — configure doesn't auto-search
+   `/opt/homebrew` (Apple Silicon) or `/usr/local` (Intel) for boost,
+   miniupnpc, or libfmt, so it bailed with "libfmt missing" after
+   silently failing the boost and miniupnpc header probes. Step 5 now
+   exports `BREW_PREFIX="$(brew --prefix)"` and passes
+   `--with-boost`, `CPPFLAGS`, `LDFLAGS` accordingly — works on both
+   Apple Silicon and Intel without branching.
+
+3. doc/build-osx.md — same Homebrew-prefix issue; the website's
+   "Full build instructions" callout links here, so it has to match.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
+
+## `cf0c9ad` — Add CLAUDE.md with project identity and audit-cycle closure
 
 **Date:** 2026-05-30 14:39:41 +0000  
 **Author:** Claude  
-**Full hash:** `1ccab18d31ec7a46be4c3a292532cac58a8051a2`
+**Full hash:** `cf0c9ad76be1ea81d3c8a3d4f2762d2d101229b2`
 
 Records the authoritative BurritoCoin network parameters, consensus
 constants, address encodings, and recurring false-positive traps so
@@ -135,11 +2330,11 @@ as concluded at commit 85328e5 so it doesn't auto-resume.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `85328e5` — Round 7 batch 17: realistic blockchain size estimates for new chain
+## `3806e64` — Round 7 batch 17: realistic blockchain size estimates for new chain
 
 **Date:** 2026-05-29 02:36:47 +0000  
 **Author:** Claude  
-**Full hash:** `85328e50b85dfa8fc9dc59c60664875ae6b67090`
+**Full hash:** `3806e64266f0e7bdab1106e8e0a4ac1716c669fa`
 
 src/chainparams.cpp: m_assumed_blockchain_size was 40 GB on mainnet and
 4 GB on testnet — copied from Litecoin's actual chain size accumulated
@@ -155,17 +2350,17 @@ Lowered both mainnet and testnet to 1 GB blockchain + 1 GB chain state
 comments noting these are forward-looking and should be revised upward
 as the chain grows. Regtest stays at 0/0 (unchanged).
 
-## `57f7831` — Auto-update CHANGELOG.md (round 7 batches 1-16)
+## `58dd152` — Auto-update CHANGELOG.md (round 7 batches 1-16)
 
 **Date:** 2026-05-29 02:35:22 +0000  
 **Author:** Claude  
-**Full hash:** `57f7831824535d4b33d41dc6d2e3d17e77efd57c`
+**Full hash:** `58dd152f36d795e7841432d656f9a8d2bf1d8391`
 
-## `bfb08c0` — Round 7 batch 16: copyright manifest references missing SVG
+## `f44474d` — Round 7 batch 16: copyright manifest references missing SVG
 
 **Date:** 2026-05-29 02:35:09 +0000  
 **Author:** Claude  
-**Full hash:** `bfb08c060889bdda5eb0474f9e60aa608c10f346`
+**Full hash:** `f44474d1e4e1efdf28eb6f305086ff2b6d4e77bd`
 
 contrib/debian/copyright listed 'src/qt/res/src/burritocoin.svg' as a
 file attributed to Bitboy/Jonas Schnelli, but no such file exists in
@@ -177,11 +2372,11 @@ preserved; only the dangling SVG-source line was removed so the
 copyright manifest no longer references a missing file (some debian
 package linters fail on this).
 
-## `c40734d` — Round 7 batch 15: missing share/pixmaps/burritocoin.ico
+## `be001df` — Round 7 batch 15: missing share/pixmaps/burritocoin.ico
 
 **Date:** 2026-05-29 02:32:39 +0000  
 **Author:** Claude  
-**Full hash:** `c40734d0b5e791223884c444f5e49bb0a8ea397f`
+**Full hash:** `be001df7457d22812400750c7a23b22444f7c415`
 
 Makefile.am WINDOWS_PACKAGING expects share/pixmaps/burritocoin.ico
 (referenced by share/setup.nsi.in line 17 as MUI_ICON), and
@@ -195,11 +2390,11 @@ Copied the existing icon from src/qt/res/icons/ so the Windows
 installer build resolves and the Debian copyright glob has something
 to point at.
 
-## `5ddf5d6` — Round 7 batch 14: missing doxygen logo file
+## `36dbc4c` — Round 7 batch 14: missing doxygen logo file
 
 **Date:** 2026-05-29 02:32:05 +0000  
 **Author:** Claude  
-**Full hash:** `5ddf5d6c7377a2c356be2aebcf983bda6992b466`
+**Full hash:** `36dbc4c34846037e95d8175d76a0bc22a1cd001e`
 
 doc/Doxyfile.in line 54 set PROJECT_LOGO to doc/burritocoin_logo_doxygen.png
 but the file on disk was named doc/bitcoin_logo_doxygen.png — the
@@ -211,11 +2406,11 @@ inherited Bitcoin logo (55x55, the size Doxygen wants) — replacing it
 with a proper BurritoCoin logo at the same resolution is a separate
 follow-up.
 
-## `af3b49c` — Round 7 batch 13: gitian + release-fetcher GitHub paths
+## `9617798` — Round 7 batch 13: gitian + release-fetcher GitHub paths
 
 **Date:** 2026-05-29 02:29:54 +0000  
 **Author:** Claude  
-**Full hash:** `af3b49c4f5812cfa22734cf7c10ef39e332cc74d`
+**Full hash:** `9617798f10adfa36168129aca112d36da702d531`
 
 Six files referenced 'https://github.com/burritocoin-project/...' but
 that GitHub organisation does not exist — the project lives at
@@ -233,11 +2428,11 @@ to point at BurritoCoinDev/BurritoCoin and
 BurritoCoinDev/burritocoin-detached-sigs (the latter matches the
 repo URL contrib/macdeploy/README.md was already pointing at).
 
-## `78aae06` — Round 7 batch 12: fee-estimator decay comments
+## `791bac4` — Round 7 batch 12: fee-estimator decay comments
 
 **Date:** 2026-05-29 02:28:15 +0000  
 **Author:** Claude  
-**Full hash:** `78aae062e51208140cb025d88e984f86f3580c1e`
+**Full hash:** `791bac4b4b6f9d4d7593ce1ef4b177f309696b3b`
 
 src/policy/fees.h: the inline comments next to SHORT_DECAY, MED_DECAY,
 and LONG_DECAY described the half-lives in wall-clock time using
@@ -247,11 +2442,11 @@ BurritoCoin's 2.5-minute spacing those translate to ~45 min, ~6 h, and
 correct as-is; only the explanatory comments were misleading anyone
 reading the BurritoCoin source for the first time.
 
-## `9185c50` — Round 7 batch 11: aspirational URL cleanup
+## `7433a81` — Round 7 batch 11: aspirational URL cleanup
 
 **Date:** 2026-05-29 02:26:02 +0000  
 **Author:** Claude  
-**Full hash:** `9185c5023f023f71fd23fb6dfe28e2cd9aeb5831`
+**Full hash:** `7433a81d023537fcead98b9128f8b4db1cbad43a`
 
 CONTRIBUTING.md line 41: referenced 'BurritoCoin Core PR Review Club'
 at burritocoincore.reviews — that domain does not exist and there is
@@ -268,11 +2463,11 @@ URL so the attribution actually points to the source.
 contrib/debian/copyright line 83: same — the Bitcoin logo attribution
 pointed at burritocointalk.org/?topic=1756.0. Restored to bitcointalk.org.
 
-## `cdea74c` — Round 7 batch 10: seed-script bugs
+## `5ea1769` — Round 7 batch 10: seed-script bugs
 
 **Date:** 2026-05-29 02:25:01 +0000  
 **Author:** Claude  
-**Full hash:** `cdea74cede9345fe84ac1f022508f9fc48f9d86b`
+**Full hash:** `5ea1769b93bb26ae37899301c0b54f47227ace10`
 
 contrib/seeds/makeseeds.py PATTERN_AGENT regex listed Bitcoin Core
 versions 0.14.x-0.18.x plus 0.21.99. BurritoCoin's CLIENT_NAME is
@@ -289,11 +2484,11 @@ the only project domain) with a generic example, and documented the
 current manual fallback workflow (edit nodes_main.txt by hand) since
 no public pool is online yet.
 
-## `cb6f758` — Round 7 batch 9: nonexistent burritocoin.org references
+## `a056288` — Round 7 batch 9: nonexistent burritocoin.org references
 
 **Date:** 2026-05-29 02:23:31 +0000  
 **Author:** Claude  
-**Full hash:** `cb6f7584d1ed4b3dac7725356bc56ac7290aa396`
+**Full hash:** `a0562882d4ce416559852ac26d77d2cdbd1061e4`
 
 The project's only domain is burritoco.in (per HANDOFF.md). The rebrand
 left "burritocoin.org" references in a few places, claiming a download
@@ -314,11 +2509,11 @@ the actual download host.
 
 doc/release-process.md line 306: same. Updated to burritoco.in.
 
-## `3076c67` — Round 7 batch 8: Qt launch year, dev-tools bugs, signet cleanup
+## `2154d81` — Round 7 batch 8: Qt launch year, dev-tools bugs, signet cleanup
 
 **Date:** 2026-05-29 02:21:09 +0000  
 **Author:** Claude  
-**Full hash:** `3076c67bde62b55c1b3a5efd8f0f3fca98e7e36c`
+**Full hash:** `2154d81eb6bdf710afad05b219a9ec96764797fb`
 
 src/qt/intro.cpp: lblExplanation1 substituted .arg(2011), Litecoin's
 launch year, into the welcome dialog. Result on screen: "...earliest
@@ -356,11 +2551,11 @@ deleted the placeholder '#signet=0' line. signet is rejected by
 CreateChainParams; documenting it as an option misleads users. Added a
 short note explaining that signet is not yet supported.
 
-## `526f213` — Round 7 batch 7: MSVC config version drift (0.21.3 -> 0.21.4)
+## `6083b73` — Round 7 batch 7: MSVC config version drift (0.21.3 -> 0.21.4)
 
 **Date:** 2026-05-29 02:16:49 +0000  
 **Author:** Claude  
-**Full hash:** `526f213af2d7d8e24d81d6f26b9d93bbd73d60c0`
+**Full hash:** `6083b73d05f35512086a52d1bbd12daeba8a98b6`
 
 build_msvc/burritocoin_config.h had CLIENT_VERSION_REVISION=3 and
 PACKAGE_STRING/PACKAGE_VERSION="0.21.3", but the canonical configure.ac
@@ -371,11 +2566,11 @@ stale version in -version output, ClientVersionString(), HTTP user-agent
 ("/BurritoCoin Core:0.21.3/"), peer subver in inv/addr, and the about
 dialog — confusing users and breaking version-specific behavior checks.
 
-## `c9b2776` — Round 7 batch 6: net.cpp 10-min block assumption + spec.html prefixes
+## `f6dc5f5` — Round 7 batch 6: net.cpp 10-min block assumption + spec.html prefixes
 
 **Date:** 2026-05-29 02:14:44 +0000  
 **Author:** Claude  
-**Full hash:** `c9b2776088364fd41fa31966489ddc5cefe97539`
+**Full hash:** `f6dc5f5105a07b51113e9570d010c5922ef1929a`
 
 src/net.cpp OutboundTargetReached(): the historical-block bandwidth
 reservation buffer divided 'timeLeftInCycle' by 600 (Bitcoin's 10-min
@@ -393,11 +2588,11 @@ ASCII character a user actually sees on screen. Integrators building
 address validators had to consult chainparams.cpp to learn 111 → m/n
 and 196 → 2. Appended the human-readable prefixes to both rows.
 
-## `fd24be2` — Round 7 batch 5: stale Litecoin/Bitcoin constants in contrib/
+## `b84aabc` — Round 7 batch 5: stale Litecoin/Bitcoin constants in contrib/
 
 **Date:** 2026-05-29 02:10:23 +0000  
 **Author:** Claude  
-**Full hash:** `fd24be2b8001c76dbc1d4afd47820a54df476d27`
+**Full hash:** `b84aabcded242efab83d387eca567a38111f2051`
 
 contrib/qos/tc.sh + README.md: replace port 9333 (Litecoin) with 9227
 (BurritoCoin mainnet P2P). The iptables rules would have been a no-op on
@@ -432,11 +2627,11 @@ src/chainparams.cpp: line 114 comment said '~3.5 days at 2.5 min/block'
 for nMinerConfirmationWindow=8064. 8064 * 2.5 = 20160 min = 14 days, not
 3.5 days (the line 130 MWEB comment already says ~14 days correctly).
 
-## `577d2db` — Round 7 batch 4: copyright tool + test runner bugs
+## `95ba938` — Round 7 batch 4: copyright tool + test runner bugs
 
 **Date:** 2026-05-29 02:05:24 +0000  
 **Author:** Claude  
-**Full hash:** `577d2dbfb998dbae990f970f24baf8b9391e2746`
+**Full hash:** `95ba938639776c0a382cf4866f0416c74401e7a1`
 
 contrib/devtools/copyright_header.py: add 'The Bitcoin Core developers'
 and 'The Litecoin Core developers' back to EXPECTED_HOLDER_NAMES list.
@@ -458,11 +2653,11 @@ filename had been left as the upstream Bitcoin name, so check_script_list()
 would emit a missing-script warning. Renaming the file satisfies both
 the semantic intent and the existing reference.
 
-## `6e7e284` — Round 7 batch 3: init service hardening + config-template bugs
+## `9837be6` — Round 7 batch 3: init service hardening + config-template bugs
 
 **Date:** 2026-05-29 01:54:38 +0000  
 **Author:** Claude  
-**Full hash:** `6e7e284d4fd1c66a11fe9240558577733a556033`
+**Full hash:** `9837be6996d58ae8e8997035bf977c083864cbfd`
 
 Bugs found by continued auditing:
 
@@ -523,11 +2718,11 @@ src/init.cpp's argsman and the per-subsystem `-flag` declarations — all
 port, rpc{allowip,bind,password,port,user}, server, testnet, txindex)
 are supported.
 
-## `24e8ef5` — Round 7 batch 2: bug-hunt cycle
+## `c05b07d` — Round 7 batch 2: bug-hunt cycle
 
 **Date:** 2026-05-29 01:50:35 +0000  
 **Author:** Claude  
-**Full hash:** `24e8ef51d4b4b3218ab94493ee70124a18f64bcc`
+**Full hash:** `c05b07d0843c417a29ce6a64b8e4dd63a77da640`
 
 Fixes for items flagged by parallel audit agents, plus deeper checks:
 
@@ -609,11 +2804,11 @@ LOW — src/qt/locale/{burritocoin_fi,burritocoin_sl}.ts
 All five hand-written scripts still pass `bash -n`.
 HTML parses cleanly across all 7 pages.
 
-## `7cedb2f` — Fix real bugs in VPS/devtools scripts (round 7 audit)
+## `2f6ac6f` — Fix real bugs in VPS/devtools scripts (round 7 audit)
 
 **Date:** 2026-05-28 20:32:32 +0000  
 **Author:** Claude  
-**Full hash:** `7cedb2ffe51f273d0bd3c6e9af7eeccc8ebece69`
+**Full hash:** `2f6ac6ff55263dd6dbf8a1b1f6b6dad46050084a`
 
 Found by a fresh bug-hunt pass with deterministic verification:
 
@@ -652,25 +2847,25 @@ render artifact.
 
 All five scripts pass `bash -n`.
 
-## `a59e8f8` — Auto-update CHANGELOG.md
+## `09d9065` — Auto-update CHANGELOG.md
 
 **Date:** 2026-05-08 21:23:36 +0000  
-**Author:** Your Name  
-**Full hash:** `a59e8f8aa6c626d57b8e9a5d78c7d7d080562175`
+**Author:** BurritoCoinDev  
+**Full hash:** `09d90659602f5c2e66ef51a94455748a755444f4`
 
-## `8ecac5f` — Add HANDOFF.md and CHANGELOG.md (recoverable handoff documents)
+## `6066561` — Add HANDOFF.md and CHANGELOG.md (recoverable handoff documents)
 
 **Date:** 2026-05-08 21:23:36 +0000  
-**Author:** Your Name  
-**Full hash:** `8ecac5f0af92ecbab8e1a0e687dd9ba8f6299ef6`
+**Author:** BurritoCoinDev  
+**Full hash:** `6066561729ab29c071919914cc49c3888f4398f6`
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 
-## `4142687` — Round 6 fixes: COPYRIGHT_YEAR + translation unit-name sync
+## `5576f7c` — Round 6 fixes: COPYRIGHT_YEAR + translation unit-name sync
 
 **Date:** 2026-05-06 15:41:42 +0000  
 **Author:** Claude  
-**Full hash:** `4142687a539a8b9ab1cbf773fd16cfda4ebbdbe5`
+**Full hash:** `5576f7c17b5aa12b26d987d775aae9a5959c06fe`
 
 Two issues from the round-6 deep audit:
 
@@ -697,11 +2892,11 @@ touching it.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `f23eb96` — Canonicalize macOS/Linux bundle identifier from org.burritocoin to in.burritoco
+## `f2837d3` — Canonicalize macOS/Linux bundle identifier from org.burritocoin to in.burritoco
 
 **Date:** 2026-05-06 15:40:28 +0000  
 **Author:** Claude  
-**Full hash:** `f23eb969ee3487ab1e1e8a00b29ee8a23d50334d`
+**Full hash:** `f2837d3d7de2258b943f73e00c4726f44bd033b1`
 
 The reverse-DNS bundle identifier convention (used in macOS app bundles,
 launchd plists, Doxygen docsets, and Apple notarization) requires you to
@@ -736,11 +2931,11 @@ not BurritoCoin's identity to claim — left alone.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `4ec1a69` — Drop executable bit from image files in share/ and src/qt/res/
+## `4e16495` — Drop executable bit from image files in share/ and src/qt/res/
 
 **Date:** 2026-05-06 15:14:28 +0000  
 **Author:** Claude  
-**Full hash:** `4ec1a69f7e9104592802b765b0c3be137bd6affe`
+**Full hash:** `4e164955747c81295e6c34636f99d6880efb73da`
 
 Several image assets (.png, .ico, .icns, .bmp) were tracked with
 mode 755 (executable). On Linux/macOS that's nonsensical for raster
@@ -754,11 +2949,11 @@ No content changes; just file mode.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `c0669a9` — Restore correct upstream copyright attribution to source files
+## `ebdd080` — Restore correct upstream copyright attribution to source files
 
 **Date:** 2026-05-06 15:14:18 +0000  
 **Author:** Claude  
-**Full hash:** `c0669a9923d8d3a72482c387d0ce4a041d90860f`
+**Full hash:** `ebdd0805dd24dba9a8b9e9aa57c3859c47ff1f83`
 
 A 5th-round audit caught that the original rebrand replaced "The
 Bitcoin Core developers" / "The Litecoin Core developers" with
@@ -801,11 +2996,11 @@ legal review would flag the prior state.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `87d5e22` — URL/domain canonicalization round 3 + verification-pass cleanups
+## `c64347b` — URL/domain canonicalization round 3 + verification-pass cleanups
 
 **Date:** 2026-05-06 14:48:36 +0000  
 **Author:** Claude  
-**Full hash:** `87d5e22987491bf65f6a69d39ed103e6c2154d52`
+**Full hash:** `c64347b27fd6cf287f2c65bbc2f4443ec765923a`
 
 A verification agent caught several stale or wrong URLs/domains that
 the prior canonicalization passes missed because their files weren't
@@ -868,11 +3063,11 @@ values inherited from upstream, not bugs.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `7f45b27` — Fix more misattributed-identity leaks (Bitcoin Core devs as BurritoCoin's)
+## `64ec2b2` — Fix more misattributed-identity leaks (Bitcoin Core devs as BurritoCoin's)
 
 **Date:** 2026-05-06 14:46:15 +0000  
 **Author:** Claude  
-**Full hash:** `7f45b27bfb9794f50a41b57ce14617785378021c`
+**Full hash:** `64ec2b269a4a41eff356a4b90bee90d3a3339979`
 
 Verification round caught four more places where the rebrand left
 specific Bitcoin Core developer identities in roles that imply they
@@ -910,11 +3105,11 @@ and accurately reflect authorship.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `3af5f1e` — URL canonicalization pass 2: catch broader stale URL patterns
+## `ce87ed1` — URL canonicalization pass 2: catch broader stale URL patterns
 
 **Date:** 2026-05-06 14:40:41 +0000  
 **Author:** Claude  
-**Full hash:** `3af5f1e403c0eff07c3dcd935dbec401b8783d07`
+**Full hash:** `ce87ed1392ce53c08cbe8a6abb739258f1dc837b`
 
 The earlier audit's grep was too narrow and missed several stale URL
 patterns. This pass canonicalizes the rest:
@@ -961,11 +3156,11 @@ modified.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `19817d5` — website: accessibility, SEO, mobile, and quality improvements
+## `18d9483` — website: accessibility, SEO, mobile, and quality improvements
 
 **Date:** 2026-05-06 14:33:44 +0000  
 **Author:** Claude  
-**Full hash:** `19817d58b44502490e841757098cd566a7e3016a`
+**Full hash:** `18d9483441c2425c81c069f8919431d304541a67`
 
 Accessibility:
 - Add a "Skip to main content" link before the nav on every page.
@@ -995,11 +3190,11 @@ Mobile / responsive:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `4eeed55` — contrib/vps/setup-electrumx.sh: drop comparative branding in comments
+## `0448140` — contrib/vps/setup-electrumx.sh: drop comparative branding in comments
 
 **Date:** 2026-05-06 14:33:29 +0000  
 **Author:** Claude  
-**Full hash:** `4eeed55910e826a5b58a943dbe0ea5bb5c08d6c0`
+**Full hash:** `0448140fad9c5bf8d3809fd80756bfeed6e42fe7`
 
 Two small comment edits inside the embedded BurritoCoin Coin class
 that ElectrumX uses:
@@ -1018,11 +3213,11 @@ comments, no class methods touched.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `4844e21` — test/: rename ltc_* → brto_*, update all importers
+## `0972384` — test/: rename ltc_* → brto_*, update all importers
 
 **Date:** 2026-05-06 14:33:17 +0000  
 **Author:** Claude  
-**Full hash:** `4844e215b865e2b2c39a0a0a22bf264fc76748cb`
+**Full hash:** `09723842a0a7e893491a1ff9b66281b337dca0c5`
 
 - test/functional/test_framework/ltc_util.py → brto_util.py
 - test/functional/ltc_replacebyfee.py → brto_replacebyfee.py
@@ -1042,11 +3237,11 @@ neutral; only test naming and discovery are affected.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `ae1c932` — Repo-root + .github + CI configs: fix stale URLs and dead refs
+## `95cb8c9` — Repo-root + .github + CI configs: fix stale URLs and dead refs
 
 **Date:** 2026-05-06 14:33:04 +0000  
 **Author:** Claude  
-**Full hash:** `ae1c9320b27026b31e9104868f34f36aa4a1f770`
+**Full hash:** `95cb8c943825ef52a73e99c7eeb9f4922f1a41a2`
 
 README.md:
 - Drop the Travis CI badge (Travis is dead in practice; the URL also
@@ -1086,11 +3281,11 @@ CONTRIBUTING.md:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `a455ae9` — doc/: fix stale URLs, broken links, restructure release notes
+## `574981f` — doc/: fix stale URLs, broken links, restructure release notes
 
 **Date:** 2026-05-06 14:32:46 +0000  
 **Author:** Claude  
-**Full hash:** `a455ae993c7d7c9045e7f05b6e111223c2aca14e`
+**Full hash:** `574981ffb3bf99993383ae2a257299bf9524d404`
 
 Comprehensive cleanup of the documentation directory:
 
@@ -1142,11 +3337,11 @@ Build doc cleanup:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `9af0764` — configure.ac/src: canonicalize GitHub URL, soften comparative comments
+## `f227758` — configure.ac/src: canonicalize GitHub URL, soften comparative comments
 
 **Date:** 2026-05-06 14:32:23 +0000  
 **Author:** Claude  
-**Full hash:** `9af07643c8dee217dbf83330c2b20ca5af32518c`
+**Full hash:** `f227758d6ff605c7eeeec238d8c3cd8b8089472b`
 
 - configure.ac: AC_INIT bug-report URL goes from
   github.com/burritocoindev/burritocoin (lowercase) to canonical
@@ -1161,11 +3356,11 @@ https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `a3bc99e` — Fix critically misleading security/release-signing identity
+## `3957ae9` — Fix critically misleading security/release-signing identity
 
 **Date:** 2026-05-06 14:31:47 +0000  
 **Author:** Claude  
-**Full hash:** `a3bc99eeeced43be31a13e00893acf747c0dc419`
+**Full hash:** `3957ae9a30e9579631a095538cda06d895269717`
 
 Three issues that would actively misroute trust if left in place:
 
@@ -1192,11 +3387,11 @@ Three issues that would actively misroute trust if left in place:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `62074dc` — Site round-2 fixes: dead Windows download, TODO placeholders, SEO
+## `02854b1` — Site round-2 fixes: dead Windows download, TODO placeholders, SEO
 
 **Date:** 2026-05-06 02:29:43 +0000  
 **Author:** Claude  
-**Full hash:** `62074dc269a1133a3627cb0387a15a9f5bf66861`
+**Full hash:** `02854b1517af16cd355ed33c0fa6a1070a63581e`
 
 Four fixes from the second-round audit:
 
@@ -1231,11 +3426,11 @@ replacements signal "in progress" without the dev-task aesthetic.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `810a26e` — Site-wide bug fixes from comprehensive audit
+## `1624a91` — Site-wide bug fixes from comprehensive audit
 
 **Date:** 2026-05-06 01:01:10 +0000  
 **Author:** Claude  
-**Full hash:** `810a26e2cbc1345443efc8178b0173ecdfab5a89`
+**Full hash:** `1624a91e37a770556b4cf0b227e39db58a3a0632`
 
 Six issues fixed across all pages:
 
@@ -1271,11 +3466,11 @@ Six issues fixed across all pages:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `3fc6c9f` — spec.html: fix hero structure and add Qt deps to build instructions
+## `d3a94cd` — spec.html: fix hero structure and add Qt deps to build instructions
 
 **Date:** 2026-05-06 00:40:42 +0000  
 **Author:** Claude  
-**Full hash:** `3fc6c9f70d0948c9fc084979a65e87295855bc20`
+**Full hash:** `d3a94cd7461cf2c7f09c01eb96ad39620062dea1`
 
 Three small fixes after a self-review:
 
@@ -1292,11 +3487,11 @@ Three small fixes after a self-review:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `34cdf22` — Add /spec integrator reference page; fix stale #worth nav links
+## `1156252` — Add /spec integrator reference page; fix stale #worth nav links
 
 **Date:** 2026-05-06 00:35:22 +0000  
 **Author:** Claude  
-**Full hash:** `34cdf22f2910a51ebad61904c4d45049f0ed63d4`
+**Full hash:** `1156252949db4026d28161697fd030f06bdb8a31`
 
 The Worth section on index.html was replaced with the Network Identity
 section in 21d05540, but the nav links on the other pages still pointed
@@ -1329,11 +3524,11 @@ the contact email). Each is clearly marked with {TODO: ...}.
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `1a538d0` — gitignore: exclude release/ build artifact directory
+## `f8880ca` — gitignore: exclude release/ build artifact directory
 
 **Date:** 2026-05-05 20:03:40 +0000  
 **Author:** Claude  
-**Full hash:** `1a538d0885258ab30719706f010bd5e4b087b0f3`
+**Full hash:** `f8880ca1120f7264382568ec490e75a89fab323e`
 
 The release/ directory holds linux-x86_64 binaries and a redistribution
 tarball produced locally; it has nothing to track in version control
@@ -1343,11 +3538,11 @@ release/ kept showing up as untracked.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 
-## `f195655` — Sync soft-fork-height test with the genesis fix and revert regtest SegwitHeight to 0
+## `c88f93f` — Sync soft-fork-height test with the genesis fix and revert regtest SegwitHeight to 0
 
 **Date:** 2026-05-05 19:48:53 +0000  
 **Author:** Claude  
-**Full hash:** `f19565504e356b51f2a293c6eb429f497fb17a75`
+**Full hash:** `c88f93f1ccd84694a02084fa03d3a7d7a23355de`
 
 Two follow-ups surfaced when running make check against the consensus
 changes from fb04392:
@@ -1380,11 +3575,11 @@ changes from fb04392:
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 
-## `21d0554` — Replace Worth section with Network Identity reference table
+## `e1e4642` — Replace Worth section with Network Identity reference table
 
 **Date:** 2026-05-05 15:13:16 +0000  
 **Author:** Claude  
-**Full hash:** `21d055406d7f8b2b269022c3fdf389661b570651`
+**Full hash:** `e1e4642760cc87e68fb96803652a2e40a0592961`
 
 The Worth section was a tongue-in-cheek "BRTO is worth $0.00" disclaimer
 that didn't help integrators or users; replace it with a clean
@@ -1402,19 +3597,19 @@ Also:
 
 https://claude.ai/code/session_014ANBfHyobtDTZSSGZf5ZQs
 
-## `4ddd66e` — Merge pull request #1 from BurritoCoinDev/claude/setup-burritocoin-infrastructure-BZp5B
+## `693b276` — Merge pull request #1 from BurritoCoinDev/claude/setup-burritocoin-infrastructure-BZp5B
 
 **Date:** 2026-05-05 09:35:50 -0500  
 **Author:** BurritoCoinDev  
-**Full hash:** `4ddd66e8361a0f24b932936a553ec0c4cc3f8498`
+**Full hash:** `693b276afb79faba1fc6a1480212e2196633e4df`
 
 Infra setup + genesis validation fixes
 
-## `fb04392` — Fix genesis validation regressions across daemon and ElectrumX setup
+## `416c8ba` — Fix genesis validation regressions across daemon and ElectrumX setup
 
 **Date:** 2026-05-05 14:28:15 +0000  
 **Author:** Claude  
-**Full hash:** `fb043929727c7df7dc17b89a9b241617f978843b`
+**Full hash:** `416c8ba356b55c928a303d8e6bc6e5e870cb5e40`
 
 - src/validation.cpp: null-guard pindexPrev in CSV branch of
   ContextualCheckBlock so the genesis block (pindexPrev == nullptr)
@@ -1436,11 +3631,11 @@ Infra setup + genesis validation fixes
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 
-## `e04fcbe` — Infrastructure cleanup: real seeds, DNS seed, VPS scripts, doc/man fixes
+## `558ec48` — Infrastructure cleanup: real seeds, DNS seed, VPS scripts, doc/man fixes
 
 **Date:** 2026-05-04 20:26:00 +0000  
 **Author:** Claude  
-**Full hash:** `e04fcbebe534bd6b18ae8bf1ab66b4a21b5233d7`
+**Full hash:** `558ec48b50c9234ee559b12f408890f009bfaf0e`
 
 Addresses handoff items #2-#8:
 
@@ -1465,11 +3660,11 @@ Addresses handoff items #2-#8:
 
 https://claude.ai/code/session_01MvNJsgpuvNACvgtoTAhzZh
 
-## `d4636d7` — Add run-a-node.html with peering instructions and chain-identity sidebar
+## `6645f13` — Add run-a-node.html with peering instructions and chain-identity sidebar
 
 **Date:** 2026-05-04 18:10:18 +0000  
 **Author:** Claude  
-**Full hash:** `d4636d75b193b7d68d2616478a69ccbf834e9390`
+**Full hash:** `6645f1358280f2a75c75dfced4bf78d42be3a4af`
 
 New page walks visitors through installing the daemon (linking back to
 the OS-specific mining guides for the build steps), adding an addnode
@@ -1482,11 +3677,11 @@ the genesis hash actually identify the chain — making clear that port
 Adds a "Run a Node" link to the navbar across index.html and all four
 mining guide pages.
 
-## `6adea71` — Round 8 audit fixes: source URLs, ports, regtest assert, website polish
+## `996c09a` — Round 8 audit fixes: source URLs, ports, regtest assert, website polish
 
 **Date:** 2026-05-03 23:15:59 +0000  
 **Author:** Claude  
-**Full hash:** `6adea71ffab88f1481d7b79072f7066c86d19c91`
+**Full hash:** `996c09a431565effd53ec30daee8be4976710739`
 
 Critical user-facing strings (printed by --version / --help / About):
 - src/init.cpp LicenseInfo() now points at burritocoindev/burritocoin.
@@ -1531,11 +3726,11 @@ Website:
 
 https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
 
-## `2ea0bda` — Fix wrong ports and stale URLs in user-facing docs
+## `937b8f5` — Fix wrong ports and stale URLs in user-facing docs
 
 **Date:** 2026-05-03 23:07:42 +0000  
 **Author:** Claude  
-**Full hash:** `2ea0bda9d120888cd76fe87fa7eb1dc0249b7c94`
+**Full hash:** `937b8f59d48eb23d2a91e99847125186aa57c13b`
 
 - doc/tor.md: HiddenServicePort and -upnp guidance updated from Litecoin
   ports (9333 / 19335) to BurritoCoin (9227 / 19227).
@@ -1550,11 +3745,11 @@ https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
 
 https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
 
-## `03a55b6` — Audit fixes: explorer case-sensitivity, brto.js premine, website polish
+## `db65b07` — Audit fixes: explorer case-sensitivity, brto.js premine, website polish
 
 **Date:** 2026-05-03 23:05:21 +0000  
 **Author:** Claude  
-**Full hash:** `03a55b60a5b926002f0b237fc1be0b78ed4e956d`
+**Full hash:** `db65b071dd63b9ec25d1c842e2747ebb2796c261`
 
 Codebase:
 - explorer/start.js + explorer/scripts/postinstall.js: require lowercase
@@ -1579,11 +3774,11 @@ Website:
 
 https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
 
-## `7984e3d` — Add explicit rpcport=9226 to mining guide configs and fix Windows backup ordering
+## `0f0e209` — Add explicit rpcport=9226 to mining guide configs and fix Windows backup ordering
 
 **Date:** 2026-05-03 23:01:12 +0000  
 **Author:** Claude  
-**Full hash:** `7984e3db7c1cebcadf25290760909458d81a7d4d`
+**Full hash:** `0f0e209d03aeed91ac19ab30548a436ae5a5b7f7`
 
 - All three guides: add rpcport=9226 to burritocoin.conf snippet so
   cpuminer's connect URL matches if defaults ever shift.
@@ -1592,6 +3787,17 @@ https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
   Connection refused right after encryptwallet shuts the node down).
 
 https://claude.ai/code/session_018pNHYsiTaDPknSRd36FRN2
+
+---
+
+# Archived history (pre-rewrite)
+
+The entries below document commits that are no longer reachable from
+`master`. They survive earlier history rewrites only in this file, so they
+are preserved verbatim rather than regenerated. Their hashes are historical
+and do not resolve against the current repository.
+
+---
 
 ## `d34a00a` — Audit fixes for all three mining guides
 

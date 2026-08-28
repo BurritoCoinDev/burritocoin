@@ -58,6 +58,28 @@ for record in log.split(RS):
         'body': [FS.join(parts[4:]).strip('\n')],
     })
 
+# Preserve archived pre-rewrite history. Commits that earlier history
+# rewrites made unreachable survive only in this file, so regeneration must
+# never drop them: everything from the archive heading onward is carried
+# through verbatim.
+ARCHIVE_HEADING = '# Archived history (pre-rewrite)'
+HASH_NOTE = (
+    "> **Note on commit hashes.** On 2026-08-28 this repository's history was\n"
+    "> rewritten to drop 44 superseded copies of the prebuilt Windows wallet,\n"
+    "> which renumbered every commit. Hashes in the *Archived history* section\n"
+    "> below refer to pre-rewrite commits and will not resolve with `git show`.\n"
+    "> The commit messages themselves are unchanged and remain the authoritative\n"
+    "> record."
+)
+
+archive = ''
+if os.path.exists('CHANGELOG.md'):
+    with open('CHANGELOG.md') as f:
+        existing = f.read()
+    idx = existing.find(ARCHIVE_HEADING)
+    if idx != -1:
+        archive = existing[idx:].rstrip('\n')
+
 lines = []
 lines.append('# CHANGELOG')
 lines.append('')
@@ -68,6 +90,9 @@ lines.append("of the project's recoverable handoff (along with `HANDOFF.md`) so 
 lines.append("contributor or session can reconstruct the work history without access to a")
 lines.append("git client. Newest commits at the top.")
 lines.append('')
+if archive:
+    lines.append(HASH_NOTE)
+    lines.append('')
 lines.append('---')
 
 for c in reversed(commits):
@@ -83,9 +108,14 @@ for c in reversed(commits):
         lines.append('')
         lines.append(body)
 
+out = '\n'.join(lines) + '\n'
+if archive:
+    out += '\n---\n\n' + archive + '\n'
+
 with open('CHANGELOG.md', 'w') as f:
-    f.write('\n'.join(lines) + '\n')
+    f.write(out)
 
 size = os.path.getsize('CHANGELOG.md')
-print(f"Wrote CHANGELOG.md ({len(commits)} commits, {size:,} bytes)")
+note = ' + archived pre-rewrite history' if archive else ''
+print(f"Wrote CHANGELOG.md ({len(commits)} commits{note}, {size:,} bytes)")
 PYEOF
