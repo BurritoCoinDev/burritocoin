@@ -27,6 +27,6 @@ rpcport=9226
 port=9227
 maxconnections=40
 
-# Parallel-run only: mesh with the Linode seed so this node syncs and both
-# stay on the same tip. DELETE THIS LINE at cutover, when the Linode goes.
-addnode=50.116.17.170:9227
+# No addnode= line is needed: the compiled-in fixed seed and the DNS seed
+# (seed.burritoco.in) both resolve to this host, and peer-exchange takes over
+# from there. The old Linode mesh peer was removed when that host was retired.
