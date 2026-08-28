@@ -22,7 +22,7 @@ module.exports = {
     coinIconUrlsByNetwork:{ "main":"./img/network-mainnet/coin-icon.svg", "test":"./img/network-testnet/coin-icon.svg", "regtest":"./img/network-regtest/coin-icon.svg" },
     coinColorsByNetwork:{ "main":"#FF8C00", "test":"#1daf00", "regtest":"#777" },
     siteTitlesByNetwork:{ "main":"BurritoCoin Explorer", "test":"BurritoCoin Testnet Explorer", "regtest":"BurritoCoin Regtest Explorer" },
-    demoSiteUrlsByNetwork:{ "main":"http://50.116.17.170:3002" },
+    demoSiteUrlsByNetwork:{ "main":"https://explorer.burritoco.in" },
     knownTransactionsByNetwork:{ main:"d347dbef904ecdb3653e4eaf2fdcfa7fdc287db36c9e287102b2c757947d7d83" },
     miningPoolsConfigUrls:[],
     maxBlockWeight:4000000,

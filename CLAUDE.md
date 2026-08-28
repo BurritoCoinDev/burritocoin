@@ -45,9 +45,10 @@ P2WPKH bech32 length = 44 chars; P2WSH = 64 chars.
   `explorer.burritoco.in` both point here.
 - Static site: **Cloudflare Pages**, built from `website/` on every push to
   `master`. Not on any VPS.
-- The Linode at `50.116.17.170` is being retired (all services moved off it
-  2026-08-18). Treat any surviving reference to it as stale — once the
-  instance is cancelled that IP gets reassigned to an unrelated customer.
+- The Linode at `50.116.17.170` is **gone** — every service moved off it
+  2026-08-18 and the instance was deleted. That IP now belongs to an
+  unrelated Linode customer, so treat any surviving reference as stale and
+  delete it rather than trusting it. The project bills $0/month.
 - **Never mine on the Oracle box** — Oracle's CSA §1.3(d) bans crypto mining
   on every account type and enforcement is automated and disable-first.
   A validating/relaying node and an explorer are outside the ban; mining is
