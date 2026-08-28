@@ -132,10 +132,10 @@ argued about afterwards. A validating/relaying node and a block explorer are
 outside the ban's text; mining is not. Mining belongs on hardware the project
 owns. See `doc/oracle-migration.md`.
 
-The Linode at `50.116.17.170` is being retired; every service moved off it on
-2026-08-18. Once the instance is cancelled that IP is reassigned to an
-unrelated customer, so any surviving reference to it should be deleted rather
-than trusted.
+The Linode at `50.116.17.170` is **gone** — every service moved off it on
+2026-08-18 and the instance was then deleted. That IP is now reassigned to an
+unrelated Linode customer, so any surviving reference to it must be deleted
+rather than trusted.
 
 The following systemd units are expected to be `active` on the Oracle box.
 Verify each with `systemctl is-active <name>`:
